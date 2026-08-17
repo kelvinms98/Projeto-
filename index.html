@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gordinho da ZL | Streetwear Autêntico</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts para fonte urbana e moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Cabeçalho -->
+    <header>
+        <div class="logo">GORDINHO DA <span>ZL</span></div>
+        <nav>
+            <a href="#">Início</a>
+            <a href="#produtos">Lançamentos</a>
+            <a href="#sobre">A Marca</a>
+            <a href="#contato">Contato</a>
+        </nav>
+        <div class="cart-icon">🛒 Carrinho (0)</div>
+    </header>
+
+    <!-- Seção Principal (Hero) -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>VESTINDO A RESPEITO DA QUEBRADA</h1>
+            <p>Peças exclusivas com cortes oversized, alta durabilidade e estilo autêntico para quem faz o corre todo dia.</p>
+            <a href="#produtos" class="btn">VER COLEÇÃO</a>
+        </div>
+    </section>
+
+    <!-- Seção de Produtos -->
+    <section id="produtos" class="products">
+        <h2>LANÇAMENTOS DA ZL</h2>
+        <div id="api-status" class="api-status">Carregando produtos...</div>
+        <div id="product-grid" class="product-grid" aria-live="polite"></div>
+    </section>
+
+    <aside class="assistant-panel" aria-live="polite">
+        <div class="assistant-header">
+            <span class="assistant-dot"></span>
+            Dogão
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="bot-message">Fala aí, rapaziada! Vamo achar a peça e a medida certa sem enrolação. Pergunta que eu te ajudo.</div>
+        </div>
+        <form id="assistant-form" class="assistant-form">
+            <input id="assistant-input" type="text" placeholder="Ex: qual tamanho pra camiseta?" aria-label="Pergunta ao assistente" />
+            <button type="submit">Enviar</button>
+        </form>
+    </aside>
+
+    <script>
+        const API_CONFIG = {
+            endpoint: 'https://sua-api.com/produtos',
+            timeout: 8000
+        };
+
+        const cartState = {
+            items: [],
+            total: 0
+        };
+
+        const assistantMemory = {
+            lastAddedProduct: null,
+            lastQuery: ''
+        };
+
+        const fallbackProducts = [
+            {
+                id: 1,
+                name: 'Camiseta Oversized "Respeito"',
+                price: 119.9,
+                status: 'available',
+                tag: 'Mais Vendido',
+                image: 'Oversized Respeito',
+                stock: 'Disponível agora'
+            },
+            {
+                id: 2,
+                name: 'Calça Cargo Utilitária ZL',
+                price: 229.9,
+                status: 'available',
+                tag: 'Novo',
+                image: 'Cargo Heavy',
+                stock: 'Disponível agora'
+            },
+            {
+                id: 3,
+                name: 'Moletom Canguru ZL Syndicate',
+                price: 249.9,
+                status: 'upcoming',
+                tag: 'Em Breve',
+                image: 'Moletom Syndicate',
+                stock: 'Entrando em estoque em breve'
+            }
+        ];
+
+        function normalizeProducts(payload) {
+            if (Array.isArray(payload)) return payload;
+            if (payload && Array.isArray(payload.products)) return payload.products;
+            if (payload && Array.isArray(payload.items)) return payload.items;
+            if (payload && Array.isArray(payload.data)) return payload.data;
+            return [];
+        }
+
+        function moneyFormat(value) {
+            const numericValue = Number(value ?? 0);
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(numericValue);
+        }
+
+        function getProductStatus(product) {
+            const rawStatus = product.status || product.availability || product.disponibilidade || product.stock_status || product.estado;
+            if (rawStatus) {
+                const statusText = String(rawStatus).toLowerCase();
+                if (statusText.includes('dispon') || statusText.includes('available') || statusText.includes('estoque')) {
+                    return 'available';
+                }
+                if (statusText.includes('breve') || statusText.includes('upcoming') || statusText.includes('em breve') || statusText.includes('previsto')) {
+                    return 'upcoming';
+                }
+            }
+
+            const available = product.is_available ?? product.disponivel ?? product.available ?? product.in_stock;
+            if (available === true || available === 'true' || Number(product.quantity ?? product.stock ?? product.quantidade ?? 0) > 0) {
+                return 'available';
+            }
+
+            return 'upcoming';
+        }
+
+        function getProductLabel(product) {
+            return product.tag ||
+                product.category ||
+                (getProductStatus(product) === 'available' ? 'Disponível' : 'Em Breve');
+        }
+
+        function getProductName(product, index) {
+            return product.name || product.title || product.modelo || product.product_name || `Produto ${index + 1}`;
+        }
+
+        function getProductImage(product, fallbackText) {
+            return product.image || product.image_url || product.thumbnail || product.cover || fallbackText;
+        }
+
+        function getProductPrice(product) {
+            return product.price ?? product.preco ?? product.valor ?? product.value ?? 0;
+        }
+
+        function getProductStockText(product) {
+            if (product.stock_text || product.stockLabel || product.stock_label) {
+                return product.stock_text || product.stockLabel || product.stock_label;
+            }
+
+            if (product.stock) {
+                return `Estoque: ${product.stock}`;
+            }
+
+            if (product.quantity !== undefined && product.quantity !== null) {
+                return `Disponível: ${product.quantity} unidade(s)`;
+            }
+
+            return getProductStatus(product) === 'available' ? 'Disponível agora' : 'Entrando em estoque em breve';
+        }
+
+        function buildProductCard(product, index) {
+            const status = getProductStatus(product);
+            const card = document.createElement('article');
+            card.className = 'product-card';
+            const productName = getProductName(product, index);
+            card.dataset.productName = productName;
+            card.dataset.productStatus = status;
+            card.dataset.productPrice = String(getProductPrice(product));
+            card.dataset.productTag = getProductLabel(product);
+
+            const tag = document.createElement('div');
+            tag.className = `product-tag ${status}`;
+            tag.textContent = getProductLabel(product);
+
+            const image = document.createElement('div');
+            image.className = 'product-img';
+            image.textContent = getProductImage(product, productName);
+
+            const title = document.createElement('h3');
+            title.textContent = productName;
+
+            const price = document.createElement('p');
+            price.className = 'price';
+            price.textContent = moneyFormat(getProductPrice(product));
+
+            const stock = document.createElement('p');
+            stock.className = `product-status ${status}`;
+            stock.textContent = getProductStockText(product);
+
+            const button = document.createElement('button');
+            button.className = 'btn-buy';
+            button.type = 'button';
+            button.dataset.productName = productName;
+            button.dataset.productStatus = status;
+            button.dataset.productPrice = String(getProductPrice(product));
+            button.textContent = status === 'available' ? 'ADICIONAR AO CARRINHO' : 'AVISAR QUANDO CHEGAR';
+
+            card.appendChild(tag);
+            card.appendChild(image);
+            card.appendChild(title);
+            card.appendChild(price);
+            card.appendChild(stock);
+            card.appendChild(button);
+
+            return card;
+        }
+
+        function renderProducts(items) {
+            const grid = document.getElementById('product-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                const emptyState = document.createElement('p');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = 'Nenhum produto disponível no momento.';
+                grid.appendChild(emptyState);
+                return;
+            }
+
+            items.forEach((product, index) => {
+                grid.appendChild(buildProductCard(product, index));
+            });
+        }
+
+        function addChatMessage(role, text) {
+            const chatMessages = document.getElementById('chat-messages');
+            if (!chatMessages) return;
+
+            const message = document.createElement('div');
+            message.className = role === 'bot' ? 'bot-message' : 'user-message';
+            message.textContent = text;
+            chatMessages.appendChild(message);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateCartCounter() {
+            const cartElement = document.querySelector('.cart-icon');
+            if (!cartElement) return;
+            cartElement.textContent = `🛒 Carrinho (${cartState.items.length})`;
+        }
+
+        function addToCart(productName, productPrice, productStatus) {
+            const normalizedName = productName || 'Produto';
+            cartState.items.push({
+                name: normalizedName,
+                price: Number(productPrice || 0),
+                status: productStatus || 'available'
+            });
+            cartState.total += Number(productPrice || 0);
+            assistantMemory.lastAddedProduct = normalizedName;
+            updateCartCounter();
+            addChatMessage('bot', `Produto adicionado ao carrinho: ${normalizedName}. Posso te ajudar com formas de pagamento ou mais detalhes dele.`);
+        }
+
+        function buildAssistantReply(question) {
+            const normalizedQuestion = question.toLowerCase();
+            const productCatalog = Array.from(document.querySelectorAll('.product-card')).map((card) => ({
+                name: card.dataset.productName,
+                status: card.dataset.productStatus,
+                price: card.dataset.productPrice,
+                tag: card.dataset.productTag
+            }));
+
+            const isSizeQuestion = normalizedQuestion.includes('tamanho') || normalizedQuestion.includes('tam') || normalizedQuestion.includes('medida') || normalizedQuestion.includes('padrão') || normalizedQuestion.includes('vestir') || normalizedQuestion.includes('caimento');
+
+            if (isSizeQuestion) {
+                if (normalizedQuestion.includes('camiseta') || normalizedQuestion.includes('camisa') || normalizedQuestion.includes('oversized')) {
+                    return 'Se tu quer um visual mais despojado, mano, o melhor é pegar 1 tamanho acima do seu usual. Se tu curte mais justinho, vai no tamanho habitual e a peça vai cair firme. No geral, a ZL trabalha com corte mais folgado e confortável.';
+                }
+
+                if (normalizedQuestion.includes('moletom') || normalizedQuestion.includes('jaqueta') || normalizedQuestion.includes('moleton')) {
+                    return 'Pra moletom, de boa, costuma ser melhor pegar o tamanho que tu usa normalmente. Se teu estilo é mais oversized mesmo, dá um pulinho para 1 tamanho acima, mas sem exagero, pra não ficar tipo mega camiseta de academia.';
+                }
+
+                if (normalizedQuestion.includes('calça') || normalizedQuestion.includes('cargo') || normalizedQuestion.includes('jeans')) {
+                    return 'Na calça, o ideal é usar o tamanho que tu veste normalmente. Se tu curte mais folgado, pode ir 1 número acima, mas se quiser encaixe mais reto, fica no teu tamanho base. Meça cintura e quadril que facilita demais.';
+                }
+
+                return 'Vamo do jeito mais certeiro: mede peito, cintura e comprimento. Se a peça for oversized, pega 1 tamanho acima; se for mais ajustada, fica no teu tamanho mesmo. Tá ligado?';
+            }
+
+            if (normalizedQuestion.includes('pix') || normalizedQuestion.includes('pagamento') || normalizedQuestion.includes('cartao') || normalizedQuestion.includes('crédito') || normalizedQuestion.includes('debito') || normalizedQuestion.includes('débito')) {
+                return 'Temos Pix, cartão de crédito e cartão de débito, de boa. Compra segura, rápido e sem dor de cabeça. Se quiser, te monto uma opção certinha aqui no carrinho.';
+            }
+
+            const productMatch = productCatalog.find((item) => {
+                if (!item.name) return false;
+                return normalizedQuestion.includes(item.name.toLowerCase()) || item.name.toLowerCase().includes(normalizedQuestion);
+            });
+
+            if (productMatch) {
+                const productStatusText = productMatch.status === 'available' ? 'disponível agora' : 'chegando em breve';
+                return `${productMatch.name} tá ${productStatusText} e custa ${moneyFormat(Number(productMatch.price || 0))}. Deu match com o teu estilo? Se quiser, eu te ajudo a mandar isso pro carrinho.`;
+            }
+
+            if (assistantMemory.lastAddedProduct && (normalizedQuestion.includes('carrinho') || normalizedQuestion.includes('adicionado') || normalizedQuestion.includes('último') || normalizedQuestion.includes('meu produto'))) {
+                return `O último item que entrou foi ${assistantMemory.lastAddedProduct}. Tá no carrinho e a gente pode seguir com Pix, crédito ou débito. Vamo fechar essa compra, meu truta.`;
+            }
+
+            if (normalizedQuestion.includes('estoque') || normalizedQuestion.includes('breve') || normalizedQuestion.includes('em breve')) {
+                const upcomingProducts = productCatalog.filter((item) => item.status === 'upcoming');
+                if (upcomingProducts.length > 0) {
+                    return `Tem novidade chegando em breve, tipo: ${upcomingProducts.map((item) => item.name).join(', ')}. Se liga aí pra não perder o drop.`;
+                }
+                return 'No momento, o rolê tá mais de peça disponível e algumas novidades em preparação. Quando cair, eu te aviso no toque.';
+            }
+
+            if (normalizedQuestion.includes('produto') || normalizedQuestion.includes('coleção') || normalizedQuestion.includes('lançamento') || normalizedQuestion.includes('roupa')) {
+                const names = productCatalog.map((item) => item.name).join(', ');
+                return `A loja tá com ${names}. Posso te indicar a melhor peça, a medida e o jeito de pagar sem enrolação.`;
+            }
+
+            return 'Pode mandar aí: peça que tu quer, tamanho ou forma de pagamento. Eu te ajudo sem enrolação, de boa, e com a vibe da ZL.';
+        }
+
+        function handleAssistantSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('assistant-input');
+            const question = input.value.trim();
+            if (!question) return;
+
+            assistantMemory.lastQuery = question;
+            addChatMessage('user', question);
+            input.value = '';
+            const answer = buildAssistantReply(question);
+            addChatMessage('bot', answer);
+        }
+
+        async function loadProducts() {
+            const statusNode = document.getElementById('api-status');
+            const grid = document.getElementById('product-grid');
+
+            try {
+                if (statusNode) {
+                    statusNode.textContent = 'Buscando produtos na API...';
+                }
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+
+                const response = await fetch(API_CONFIG.endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const products = normalizeProducts(data);
+
+                if (products.length > 0) {
+                    renderProducts(products);
+                    if (statusNode) {
+                        statusNode.textContent = 'Produtos atualizados pela API.';
+                    }
+                    return;
+                }
+
+                throw new Error('API retornou vazio');
+            } catch (error) {
+                console.warn('Não foi possível carregar os produtos da API. Usando dados locais.', error);
+                renderProducts(fallbackProducts);
+                if (statusNode) {
+                    statusNode.textContent = 'Mostrando catálogo local enquanto a API não responde.';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCounter();
+            loadProducts();
+
+            const assistantForm = document.getElementById('assistant-form');
+            if (assistantForm) {
+                assistantForm.addEventListener('submit', handleAssistantSubmit);
+            }
+
+            document.addEventListener('click', (event) => {
+                const buyButton = event.target.closest('.btn-buy');
+                if (!buyButton) return;
+
+                const productName = buyButton.dataset.productName || 'Produto';
+                const productPrice = buyButton.dataset.productPrice || 0;
+                const productStatus = buyButton.dataset.productStatus || 'available';
+                addToCart(productName, productPrice, productStatus);
+            });
+        });
+    </script>
+
+    <!-- Manifesto / Sobre Nós -->
+    <section id="sobre" class="about">
+        <div class="about-content">
+            <h2>MANIFESTO DA ZL</h2>
+            <p>Nascido no coração da Zona Leste, o <strong>Gordinho da ZL</strong> não é só uma marca de roupa; é a tradução da nossa vivência, da correria e do estilo de quem constrói o próprio caminho. Nossas peças unem o conforto do streetwear com a identidade forte da nossa gente.</p>
+        </div>
+    </section>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>&copy; 2026 Gordinho da ZL. Todos os direitos reservados.</p>
+        <p>Feito com atitude de quebrada para o mundo.</p>
+    </footer>
+
+</body>
+</html>
