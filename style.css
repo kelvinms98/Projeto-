@@ -7,8 +7,8 @@
 }
 
 body {
-    background-color: #000a46;
-    color: #ffffff;
+    background-color: #0d0d0d;
+    color: #f4f4f4;
 }
 
 /* Cabeçalho */
@@ -28,11 +28,12 @@ header {
     font-size: 24px;
     font-weight: 900;
     letter-spacing: 1px;
-    color: #00189e;
+    color: #ecedf1;
 }
 
 .logo span {
-    color: #001694;
+    color: rgb(238, 24
+    0, 234);
 }
 
 nav a {
@@ -45,14 +46,14 @@ nav a {
 }
 
 nav a:hover {
-    color: #ff2a2a;
+    color: rgb(11, 33, 160)
 }
 
 .cart-icon {
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    background: #ff2a2a;
+    background: #4d4aec;
     padding: 8px 15px;
     border-radius: 4px;
 }

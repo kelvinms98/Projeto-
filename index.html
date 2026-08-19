@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gordinho da ZL | Streetwear Autêntico</title>
+    <title> Nexus | Streetwear Autêntico</title>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts para fonte urbana e moderna -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
@@ -11,8 +11,7 @@
 <body>
 
     <!-- Cabeçalho -->
-    <header>
-        <div class="logo">GORDINHO DA <span>ZL</span></div>
+    <header iv class="logo"> Nexus <span> nx </span></div>
         <nav>
             <a href="#">Início</a>
             <a href="#produtos">Lançamentos</a>
@@ -33,7 +32,7 @@
 
     <!-- Seção de Produtos -->
     <section id="produtos" class="products">
-        <h2>LANÇAMENTOS DA ZL</h2>
+        <h2>LANÇAMENTOS </h2>
         <div id="api-status" class="api-status">Carregando produtos...</div>
         <div id="product-grid" class="product-grid" aria-live="polite"></div>
     </section>
@@ -41,7 +40,7 @@
     <aside class="assistant-panel" aria-live="polite">
         <div class="assistant-header">
             <span class="assistant-dot"></span>
-            Dogão
+            Vampira
         </div>
         <div id="chat-messages" class="chat-messages">
             <div class="bot-message">Fala aí, rapaziada! Vamo achar a peça e a medida certa sem enrolação. Pergunta que eu te ajudo.</div>
@@ -53,9 +52,20 @@
     </aside>
 
     <script>
+        // Configuração do Supabase (substitua `anonKey` pela sua chave pública anon se desejar)
+        const SUPABASE = {
+            url: 'https://khimlcgwdhmuymqolzpu.supabase.co',
+            anonKey: 'sb_publishable_CSq2WN8zOCErPR89hwckbQ_7YW6Aa4i'
+        };
+
         const API_CONFIG = {
-            endpoint: 'https://sua-api.com/produtos',
-            timeout: 8000
+            endpoint: SUPABASE.url + '/rest/v1/products?select=*',
+            timeout: 8000,
+            headers: {
+                'apikey': SUPABASE.anonKey,
+                'Authorization': SUPABASE.anonKey ? `Bearer ${SUPABASE.anonKey}` : '',
+                'Accept': 'application/json'
+            }
         };
 
         const cartState = {
@@ -89,7 +99,7 @@
             },
             {
                 id: 3,
-                name: 'Moletom Canguru ZL Syndicate',
+                name: 'Moletom Canguru nexus Syndicate',
                 price: 249.9,
                 status: 'upcoming',
                 tag: 'Em Breve',
@@ -352,10 +362,7 @@
 
                 const response = await fetch(API_CONFIG.endpoint, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
+                    headers: Object.assign({'Content-Type': 'application/json'}, API_CONFIG.headers || {}),
                     signal: controller.signal
                 });
 
@@ -411,13 +418,13 @@
     <section id="sobre" class="about">
         <div class="about-content">
             <h2>MANIFESTO DA ZL</h2>
-            <p>Nascido no coração da Zona Leste, o <strong>Gordinho da ZL</strong> não é só uma marca de roupa; é a tradução da nossa vivência, da correria e do estilo de quem constrói o próprio caminho. Nossas peças unem o conforto do streetwear com a identidade forte da nossa gente.</p>
+            <p>Nascido no coração da Zona Leste, <strong> A Nexus</strong> não é só uma marca de roupa; é a tradução da nossa vivência, da correria e do estilo de quem constrói o próprio caminho. Nossas peças unem o conforto do streetwear com a identidade forte da nossa gente.</p>
         </div>
     </section>
 
     <!-- Rodapé -->
     <footer>
-        <p>&copy; 2026 Gordinho da ZL. Todos os direitos reservados.</p>
+        <p>&copy; 2026 Nexus. Todos os direitos reservados.</p>
         <p>Feito com atitude de quebrada para o mundo.</p>
     </footer>
 

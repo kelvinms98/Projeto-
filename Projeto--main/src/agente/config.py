@@ -15,3 +15,7 @@ DB_PORT = int(os.environ.get("DB_PORT", "3306"))
 DB_USER = os.environ.get("DB_USER", "root")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
 DB_NAME = os.environ.get("DB_NAME", "agente")
+# Supabase (opcional): defina SUPABASE_URL e SUPABASE_KEY no .env quando disponível
+# Exemplo de SUPABASE_URL: https://xxxx.supabase.co
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://khimlcgwdhmuymqolzpu.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
