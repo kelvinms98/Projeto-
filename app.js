@@ -5,7 +5,11 @@ const SUPABASE_KEY = 'sb_publishable_CSq2WN8zOCErPR89hwckbQ_7YW6Aa4i';
 const SUPABASE_TABLE = `${SUPABASE_URL}/rest/v1/project_entries`;
 let entries = [];
 const DEFAULT_SETTINGS = { email: 'k.monteiro.soares@uni9.edu.br', key: 'if4zrgh5gxkaWuYyG', service: 'service_dpv9z4r', template: 'template_3zqr5fj' };
-let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+let settings = { ...DEFAULT_SETTINGS };
+Object.keys(DEFAULT_SETTINGS).forEach((key) => {
+  if (typeof savedSettings[key] === 'string' && savedSettings[key].trim()) settings[key] = savedSettings[key].trim();
+});
 let currentView = 'updates';
 const $ = (selector) => document.querySelector(selector);
 const formatDate = (value) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value)).replace('.', '').toUpperCase();
