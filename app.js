@@ -12,6 +12,7 @@ Object.keys(DEFAULT_SETTINGS).forEach((key) => {
 });
 let currentView = 'updates';
 const $ = (selector) => document.querySelector(selector);
+document.querySelectorAll('[hidden]').forEach((element) => { element.style.display = 'none'; });
 const formatDate = (value) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value)).replace('.', '').toUpperCase();
 const formatTime = (value) => new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
@@ -80,9 +81,10 @@ function openEntry(type = currentView) {
   $('#entry-form').reset();
   $('#preview').hidden = true;
   $('#entry-dialog').hidden = false;
+  $('#entry-dialog').style.display = 'grid';
   $('#person-name').focus();
 }
-function closeDialog(id) { $(`#${id}`).hidden = true; }
+function closeDialog(id) { const dialog = $(`#${id}`); dialog.hidden = true; dialog.style.display = 'none'; }
 
 async function notify(entry) {
   const status = entry.status === 'working' ? 'Funcionando' : 'Não funcionando';
@@ -127,7 +129,7 @@ document.addEventListener('click', (event) => {
   const close = event.target.closest('[data-close]');
   if (close) closeDialog(close.dataset.close);
   if (event.target.id === 'new-entry-button' || event.target.id === 'empty-new-button') openEntry();
-  if (event.target.id === 'settings-button') { $('#owner-email').value = settings.email || ''; $('#emailjs-key').value = settings.key || ''; $('#emailjs-service').value = settings.service || ''; $('#emailjs-template').value = settings.template || ''; $('#settings-dialog').hidden = false; }
+  if (event.target.id === 'settings-button') { $('#owner-email').value = settings.email || ''; $('#emailjs-key').value = settings.key || ''; $('#emailjs-service').value = settings.service || ''; $('#emailjs-template').value = settings.template || ''; $('#settings-dialog').hidden = false; $('#settings-dialog').style.display = 'grid'; }
   const deleteButton = event.target.closest('.delete-entry');
   if (deleteButton && confirm('Excluir este registro?')) { deleteEntry(deleteButton.dataset.id).then(() => { entries = entries.filter((entry) => entry.id !== deleteButton.dataset.id); render(); }).catch(() => alert('Não foi possível excluir o registro no banco.')); }
 });
