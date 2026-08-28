@@ -36,6 +36,23 @@ async function deleteEntry(id) {
   if (!response.ok) throw new Error('Não foi possível excluir no Supabase');
 }
 
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(1, 1400 / image.width, 1000 / image.height);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+      URL.revokeObjectURL(image.src);
+    };
+    image.onerror = () => reject(new Error('Não foi possível ler o print'));
+    image.src = URL.createObjectURL(file);
+  });
+}
+
 function render() {
   const list = entries.filter((entry) => entry.type === currentView).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const updates = entries.filter((entry) => entry.type === 'updates');
@@ -83,22 +100,20 @@ $('#entry-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const file = $('#screenshot').files[0];
   if (!file || file.size > 5 * 1024 * 1024) return alert('Selecione um print de imagem de até 5 MB.');
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const entry = { id: crypto.randomUUID(), type: $('#entry-type').value, name: $('#person-name').value.trim(), ra: $('#person-ra').value.trim(), description: $('#description').value.trim(), status: document.querySelector('input[name="status"]:checked').value, image: reader.result, createdAt: new Date().toISOString() };
+  compressImage(file).then(async (image) => {
+    const entry = { id: crypto.randomUUID(), type: $('#entry-type').value, name: $('#person-name').value.trim(), ra: $('#person-ra').value.trim(), description: $('#description').value.trim(), status: document.querySelector('input[name="status"]:checked').value, image, createdAt: new Date().toISOString() };
     try {
       await saveEntry(entry);
       entries.push(entry);
     } catch (error) {
       entries.push(entry);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-      alert('Não foi possível salvar no banco. O registro ficou salvo apenas neste navegador.');
+      alert(`Não foi possível salvar no banco: ${error.message}. O registro ficou salvo apenas neste navegador.`);
     }
     closeDialog('entry-dialog');
     render();
     if (settings.email) notify(entry);
-  };
-  reader.readAsDataURL(file);
+  }).catch((error) => alert(error.message));
 });
 $('#screenshot').addEventListener('change', () => { const file = $('#screenshot').files[0]; if (file) { $('#preview').src = URL.createObjectURL(file); $('#preview').hidden = false; } });
 $('#settings-form').addEventListener('submit', (event) => { event.preventDefault(); settings = { email: $('#owner-email').value.trim(), key: $('#emailjs-key').value.trim(), service: $('#emailjs-service').value.trim(), template: $('#emailjs-template').value.trim() }; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); closeDialog('settings-dialog'); });
