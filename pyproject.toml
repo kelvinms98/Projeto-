@@ -1,0 +1,28 @@
+[project]
+name = "assistente-pesquisa-ia"
+version = "0.1.0"
+description = "Agente de pesquisa com tool-calling usando a API da Anthropic (Claude)"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "duckduckgo-search>=6.3.0",
+    "requests>=2.32.0",
+    "beautifulsoup4>=4.12.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
