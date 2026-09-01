@@ -735,6 +735,28 @@ input:focus, select:focus {
   background: linear-gradient(135deg, rgba(217, 61, 141, 0.22), rgba(107, 76, 231, 0.26));
   border-color: rgba(124, 90, 241, 0.4);
 }
+.installment-box {
+  margin-top: 12px;
+}
+.installment-box label {
+  display: grid;
+  gap: 8px;
+}
+.installment-box span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.installment-box select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
 .cart-checkout {
   width: 100%;
 }

@@ -22,6 +22,8 @@ const customerStreet = document.getElementById('customerStreet');
 const customerNumber = document.getElementById('customerNumber');
 const customerComplement = document.getElementById('customerComplement');
 const customerCEP = document.getElementById('customerCEP');
+const installmentBox = document.getElementById('installmentBox');
+const installmentSelect = document.getElementById('installmentSelect');
 
 let cartItems = 0;
 let cartProducts = [];
@@ -214,6 +216,26 @@ function getSubtotal() {
   return cartProducts.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity || 1), 0);
 }
 
+function updateInstallmentOptions() {
+  if (!installmentSelect) return;
+  
+  const subtotal = getSubtotal();
+  const discount = subtotal * AUTO_DISCOUNT_PERCENT;
+  const delivery = subtotal > 250 ? 0 : DELIVERY_PRICE;
+  const finalTotal = subtotal - discount + delivery;
+
+  const options = installmentSelect.querySelectorAll('option');
+  options.forEach((option, index) => {
+    if (index === 0) {
+      option.textContent = `À vista (sem juros)`;
+    } else {
+      const installments = parseInt(option.value);
+      const installmentValue = finalTotal / installments;
+      option.textContent = `${installments}x de ${formatCurrency(installmentValue)}`;
+    }
+  });
+}
+
 function renderCart() {
   if (!cartList || !cartTotal || !cartDiscount || !cartFinalTotal || !cartDelivery) return;
 
@@ -253,6 +275,7 @@ function renderCart() {
   cartDiscount.textContent = `-${formatCurrency(discount)}`;
   cartDelivery.textContent = formatCurrency(delivery);
   cartFinalTotal.textContent = formatCurrency(finalTotal);
+  updateInstallmentOptions();
 }
 
 function updateCartCount() {
@@ -382,6 +405,11 @@ if (paymentOptions) {
     option.addEventListener('click', () => {
       paymentOptions.forEach((item) => item.classList.toggle('active', item === option));
       selectedPaymentMethod = option.dataset.method || 'pix';
+      
+      if (installmentBox) {
+        installmentBox.style.display = selectedPaymentMethod === 'cartao' ? 'block' : 'none';
+      }
+      
       if (assistantResponse) {
         const labelMap = { pix: 'PIX', cartao: 'Cartão', boleto: 'Boleto' };
         assistantResponse.textContent = `Método de pagamento selecionado: ${labelMap[selectedPaymentMethod]}.`;
