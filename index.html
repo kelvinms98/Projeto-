@@ -1,24 +1,291 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro de Entregas</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header class="topbar"><a class="brand" href="#inicio"><span class="brand-mark">R</span><span>registro<span class="accent">.</span></span></a><div class="topbar-actions"><span id="connection-status" class="connection"><i></i> dados neste dispositivo</span><button id="settings-button" class="icon-button" title="Configurar notificações" aria-label="Configurar notificações">⚙</button></div></header>
-  <main id="inicio" class="shell">
-    <section class="intro"><div><p class="kicker">PROJETO / CONTROLE DE ENTREGA</p><h1>O que foi feito,<br><em>fica registrado.</em></h1><p class="intro-copy">Centralize atualizações de código e evidências do projeto em um só lugar.</p></div><div class="date-stamp"><span>HOJE</span><strong id="today"></strong></div></section>
-    <section class="stats" aria-label="Resumo do projeto"><div class="stat"><span>ATUALIZAÇÕES</span><strong id="updates-count">0</strong></div><div class="stat"><span>DOCUMENTAÇÕES</span><strong id="docs-count">0</strong></div><div class="stat"><span>FUNCIONANDO</span><strong id="working-count">0%</strong></div><div class="stat stat-highlight"><span>ÚLTIMO REGISTRO</span><strong id="last-entry">—</strong></div></section>
-    <nav class="tabs" aria-label="Tipo de registro"><button class="tab active" data-view="updates">Atualizações de código <span id="tab-updates">0</span></button><button class="tab" data-view="docs">Documentação <span id="tab-docs">0</span></button></nav>
-    <section class="workspace"><div class="section-heading"><div><p class="kicker" id="view-kicker">DIÁRIO TÉCNICO</p><h2 id="view-title">Atualizações de código</h2></div><button class="primary-button" id="new-entry-button">＋ Novo registro</button></div><div id="empty-state" class="empty-state"><div class="empty-icon">＋</div><h3>Nenhum registro ainda</h3><p>Adicione a primeira entrega do projeto para começar o histórico.</p><button class="text-button" id="empty-new-button">Criar registro</button></div><div id="entries" class="entries" aria-live="polite"></div></section>
-  </main>
-  <div id="entry-dialog" class="dialog-backdrop" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-head"><div><p class="kicker">NOVO REGISTRO</p><h2 id="dialog-title">Atualização de código</h2></div><button class="close-button" data-close="entry-dialog" aria-label="Fechar">×</button></div><form id="entry-form"><input type="hidden" id="entry-type" value="updates"><div class="form-grid"><label>Nome completo<input id="person-name" required maxlength="80" placeholder="Ex.: Ana Souza"></label><label>RA / matrícula<input id="person-ra" required maxlength="30" placeholder="Ex.: 202400123"></label></div><label>O que foi feito?<textarea id="description" required maxlength="500" placeholder="Descreva a entrega, alteração ou descoberta..."></textarea><div id="status-field"><span class="field-label">O código está funcionando?</span><div class="status-options"><label><input type="radio" name="status" value="working" checked><span class="status-pill good">● Sim, funcionando</span></label><label><input type="radio" name="status" value="broken"><span class="status-pill bad">● Não está funcionando</span></label></div></div><label class="upload-box"><input id="screenshot" type="file" accept="image/*" required><span class="upload-icon">⌁</span><strong>Coloque o print aqui</strong><small>PNG, JPG ou WEBP · até 5 MB</small><img id="preview" alt="Pré-visualização do print" hidden></label><div class="form-actions"><button type="button" class="secondary-button" data-close="entry-dialog">Cancelar</button><button class="primary-button" type="submit">Salvar registro</button></div></form></section></div>
-  <div id="settings-dialog" class="dialog-backdrop" hidden><section class="dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="dialog-head"><div><p class="kicker">NOTIFICAÇÕES</p><h2 id="settings-title">Receber por e-mail</h2></div><button class="close-button" data-close="settings-dialog" aria-label="Fechar">×</button></div><p class="dialog-note">Sem hospedagem paga: configure um serviço gratuito do EmailJS para enviar cada registro ao seu e-mail. Sem configuração, o botão de envio abre o seu aplicativo de e-mail.</p><form id="settings-form"><label>E-mail que recebe as notificações<input id="owner-email" type="email" required placeholder="seuemail@exemplo.com"></label><label>Public Key do EmailJS <span class="optional">opcional</span><input id="emailjs-key" placeholder="public_xxxxx"></label><label>Service ID <span class="optional">opcional</span><input id="emailjs-service" placeholder="service_xxxxx"></label><label>Template ID <span class="optional">opcional</span><input id="emailjs-template" placeholder="template_xxxxx"></label><p class="form-hint">A chave pública e os IDs podem ficar no navegador. Nunca coloque uma senha ou chave secreta aqui.</p><div class="form-actions"><button type="button" class="secondary-button" data-close="settings-dialog">Cancelar</button><button class="primary-button" type="submit">Salvar configurações</button></div></form></section></div>
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Store | Moda Street</title>
+    <meta
+      name="description"
+      content="Nexus Store vende roupas com estilo streetwear e assistente virtual para indicar tamanho e métodos de pagamento."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">N</div>
+        <div>
+          <p class="brand-kicker">streetwear store</p>
+          <h1>NEXUS</h1>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#loja">Loja</a>
+        <a href="#colecao">Coleção</a>
+        <a href="#pagamentos">Pagamentos</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="tag">moda urbana premium</span>
+          <h2>Roupas que têm presença, poder e atitude.</h2>
+          <p>
+            A Nexus nasceu para vestir quem quer aparecer com estilo. Coleções
+            exclusivas, conforto de alta performance e uma assistente virtual
+            que te ajuda a escolher o tamanho certo antes de comprar.
+          </p>
+          <div class="cta-row">
+            <a href="#colecao" class="primary-btn">Ver coleção</a>
+            <a href="#pagamentos" class="secondary-btn">Métodos de pagamento</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" id="loja">
+          <div class="showcase-card large-card">
+            <img src="Camisa-neymar.jpg.jpg" alt="Modelo usando camisa Neymar" />
+            <div class="card-label">Neymar Signature</div>
+          </div>
+          <div class="showcase-stack">
+            <div class="showcase-card small-card">
+              <img src="Iron Mike Tyson.jpg" alt="Modelo usando roupa estilo Mike Tyson" />
+              <div class="card-label">Tyson Edge</div>
+            </div>
+            <div class="mini-banner">
+              <span>100% original</span>
+              <strong>Entrega rápida</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="colecao" class="catalog">
+        <div class="section-heading">
+          <span class="section-label">coleção</span>
+          <h3>Itens mais vendidos</h3>
+        </div>
+
+        <div class="product-grid">
+          <article class="product-card">
+            <div class="product-image">
+              <img src="Camisa-neymar.jpg.jpg" alt="Camisa Neymar" />
+            </div>
+            <div class="product-body">
+              <div class="product-topline">
+                <span>Camisa</span>
+                <strong>R$ 189</strong>
+              </div>
+              <h4>Neymar Street</h4>
+              <p>Malha premium, caimento moderno e visual de impacto.</p>
+              <button type="button">Comprar agora</button>
+            </div>
+          </article>
+
+          <article class="product-card">
+            <div class="product-image">
+              <img src="Iron Mike Tyson.jpg" alt="Moletom Mike Tyson" />
+            </div>
+            <div class="product-body">
+              <div class="product-topline">
+                <span>Moletom</span>
+                <strong>R$ 249</strong>
+              </div>
+              <h4>Tyson Power</h4>
+              <p>Estilo agressivo, conforto máximo e presença no look.</p>
+              <button type="button">Comprar agora</button>
+            </div>
+          </article>
+
+          <article class="product-card">
+            <div class="product-image">
+              <img src="Camisa-neymar.jpg.jpg" alt="Jaqueta casual" />
+            </div>
+            <div class="product-body">
+              <div class="product-topline">
+                <span>Jaqueta</span>
+                <strong>R$ 329</strong>
+              </div>
+              <h4>Elite Flow</h4>
+              <p>Proteção, movimento e visual urbano para o dia inteiro.</p>
+              <button type="button">Comprar agora</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="fit-box">
+        <div class="section-label">fit assistant</div>
+        <div class="calculator-grid">
+          <div class="inputs">
+            <h3>Medida do seu look</h3>
+            <form id="fitForm">
+              <div class="field-row">
+                <label>
+                  <span>Peito (cm)</span>
+                  <input id="peito" type="number" min="50" max="200" value="96" required />
+                </label>
+
+                <label>
+                  <span>Cintura (cm)</span>
+                  <input id="cintura" type="number" min="40" max="180" value="82" required />
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  <span>Quadril (cm)</span>
+                  <input id="quadril" type="number" min="50" max="210" value="100" required />
+                </label>
+
+                <label>
+                  <span>Altura (cm)</span>
+                  <input id="altura" type="number" min="120" max="220" value="172" required />
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  <span>Estilo</span>
+                  <select id="fitStyle">
+                    <option value="slim">Slim</option>
+                    <option value="regular" selected>Regular</option>
+                    <option value="oversized">Oversized</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Peça</span>
+                  <select id="tipoPeca">
+                    <option value="camiseta" selected>Camiseta</option>
+                    <option value="moletom">Moletom</option>
+                    <option value="jaqueta">Jaqueta</option>
+                    <option value="calca">Calça</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="actions">
+                <button type="submit" class="primary-btn">Calcular</button>
+                <button type="button" id="resetBtn" class="secondary-btn light">Resetar</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="result-panel">
+            <div class="mini-card">
+              <span>Vampira</span>
+              <strong id="vampiraMsg">Seu look está pronto para entrar no clima.</strong>
+            </div>
+
+            <div class="result-box">
+              <p class="label-result">Tamanho ideal</p>
+              <h4 id="tamanhoResult">M</h4>
+              <p id="descricaoResult">Caimento confortável com visual urbano e controle.</p>
+            </div>
+
+            <ul id="tipsList" class="tips-list">
+              <li>• Peito com espaço pra respirar.</li>
+              <li>• Cintura sem apertar.</li>
+              <li>• Quadril com caimento natural.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="pagamentos" class="payment-box">
+        <div class="section-heading">
+          <span class="section-label">pagamento</span>
+          <h3>Formas de pagamento</h3>
+        </div>
+
+        <div class="payment-grid">
+          <div class="payment-card">
+            <span>PIX</span>
+            <strong>10% OFF</strong>
+            <p>Pagamento imediato com código Pix.</p>
+          </div>
+          <div class="payment-card">
+            <span>Cartão</span>
+            <strong>Até 12x</strong>
+            <p>Parcelamento em cartão de crédito.</p>
+          </div>
+          <div class="payment-card">
+            <span>Boleto</span>
+            <strong>À vista</strong>
+            <p>Desconto em boleto bancário.</p>
+          </div>
+          <div class="payment-card">
+            <span>PayPal</span>
+            <strong>Seguro</strong>
+            <p>Pagamento internacional com facilidade.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-line"></div>
+      <p>
+        Nexus Store foi criada para unir moda, atitude e tecnologia. Nossa missão é
+        encontrar o look perfeito com conforto, preço justo e estilo que faz a diferença.
+      </p>
+      <small>© 2026 Nexus Store</small>
+    </footer>
+
+    <div class="assistant-widget" id="assistantWidget">
+      <div class="assistant-header">
+        <div class="assistant-avatar">N</div>
+        <div class="assistant-title-wrap">
+          <strong>Vampira Nexus</strong>
+          <span>online agora</span>
+        </div>
+        <div class="assistant-actions">
+          <button type="button" class="icon-btn" id="minimizeAssistant" aria-label="Minimizar assistente">−</button>
+          <button type="button" class="icon-btn" id="maximizeAssistant" aria-label="Maximizar assistente">□</button>
+          <button type="button" class="icon-btn" id="closeAssistant" aria-label="Fechar assistente">×</button>
+        </div>
+      </div>
+
+      <div class="assistant-body">
+        <p class="assistant-bubble" id="assistantResponse">
+          Fala comigo, meu parceiro. Vou te ajudar a achar o tamanho certo e o estilo ideal para a sua compra.
+        </p>
+
+        <div class="assistant-form-box">
+          <label>
+            <span>Seu tamanho da peça</span>
+            <select id="assistantSize">
+              <option value="P">P</option>
+              <option value="M" selected>M</option>
+              <option value="G">G</option>
+              <option value="GG">GG</option>
+            </select>
+          </label>
+          <button type="button" id="assistantSuggest" class="primary-btn small-btn">Ajudar agora</button>
+        </div>
+
+        <div class="assistant-payment">
+          <span>Pagamento:</span>
+          <div class="payment-chips">
+            <i>PIX</i>
+            <i>Cartão</i>
+            <i>Boleto</i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="assistant-toggle" id="assistantToggle" aria-label="Abrir assistente">
+      N
+    </button>
+
+    <script src="app.js"></script>
+  </body>
 </html>
