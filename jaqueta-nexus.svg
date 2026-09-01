@@ -1,0 +1,50 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="183" y1="138" x2="1017" y2="1117" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F2736"/>
+      <stop offset="1" stop-color="#090D15"/>
+    </linearGradient>
+    <linearGradient id="jacket" x1="345" y1="180" x2="860" y2="988" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2B313C"/>
+      <stop offset="1" stop-color="#0C1017"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="507" y1="202" x2="702" y2="901" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7D9A2" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#E5B05A" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <circle cx="600" cy="600" r="490" fill="#101827" opacity="0.6"/>
+
+  <g>
+    <path d="M382 261L494 199H706L818 261L903 972C844 1036 761 1076 600 1076C439 1076 356 1036 297 972L382 261Z" fill="url(#jacket)"/>
+    <path d="M472 221L600 151L728 221L666 318H534L472 221Z" fill="#171D2B"/>
+    <path d="M300 365L382 261L451 347L430 476L348 430L300 365Z" fill="#1A2230"/>
+    <path d="M900 365L818 261L749 347L770 476L852 430L900 365Z" fill="#1A2230"/>
+    <path d="M520 340H680L695 481H505L520 340Z" fill="#0E1726" opacity="0.8"/>
+    <path d="M520 340H680L695 481H505L520 340Z" stroke="#A6B4C7" stroke-opacity="0.2"/>
+    <path d="M600 322L620 504H580L600 322Z" fill="#1B2534"/>
+    <path d="M430 476L520 340L530 520L470 820L414 742L390 630L430 476Z" fill="#111A28"/>
+    <path d="M770 476L680 340L670 520L730 820L786 742L810 630L770 476Z" fill="#111A28"/>
+    <path d="M470 820H730L748 991H452L470 820Z" fill="#090F18"/>
+    <path d="M470 820H730L748 991H452L470 820Z" stroke="#B9C5D8" stroke-opacity="0.15"/>
+    <path d="M525 365H675L664 684H536L525 365Z" fill="url(#shine)" opacity="0.13"/>
+    <path d="M527 508H674" stroke="#DDC39A" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+    <path d="M541 544H660" stroke="#DDC39A" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="600" cy="595" r="100" fill="#111A29" opacity="0.32"/>
+    <path d="M531 746C550 714 572 689 600 689C628 689 650 714 669 746L701 993H499L531 746Z" fill="#0D1524"/>
+  </g>
+
+  <g opacity="0.9">
+    <path d="M428 518L321 684" stroke="#E7C27A" stroke-width="9" stroke-linecap="round"/>
+    <path d="M772 518L879 684" stroke="#E7C27A" stroke-width="9" stroke-linecap="round"/>
+    <path d="M451 561L334 746" stroke="#E7C27A" stroke-width="7" stroke-linecap="round"/>
+    <path d="M749 561L866 746" stroke="#E7C27A" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <text x="600" y="1030" text-anchor="middle" fill="#F4D89A" font-size="84" font-family="Georgia, serif" font-weight="700" letter-spacing="3">NEXUS</text>
+    <text x="600" y="1080" text-anchor="middle" fill="#F4D89A" font-size="32" font-family="Arial" letter-spacing="7">JACKET</text>
+  </g>
+</svg>

@@ -30,6 +30,10 @@
         <a href="#colecao">Coleção</a>
         <a href="#pagamentos">Pagamentos</a>
       </nav>
+      <button type="button" class="cart-pill" id="cartToggle" aria-label="Abrir carrinho">
+        <span>Carrinho</span>
+        <strong id="cartCount">0</strong>
+      </button>
     </header>
 
     <main>
@@ -43,26 +47,39 @@
             que te ajuda a escolher o tamanho certo antes de comprar.
           </p>
           <div class="cta-row">
-            <a href="#colecao" class="primary-btn">Ver coleção</a>
+            <a href="#fit-box" class="primary-btn">Ver fit do look</a>
             <a href="#pagamentos" class="secondary-btn">Métodos de pagamento</a>
           </div>
         </div>
 
         <div class="hero-visual" id="loja">
-          <div class="showcase-card large-card">
-            <img src="Camisa-neymar.jpg.jpg" alt="Modelo usando camisa Neymar" />
-            <div class="card-label">Neymar Signature</div>
-          </div>
-          <div class="showcase-stack">
-            <div class="showcase-card small-card">
-              <img src="Iron Mike Tyson.jpg" alt="Modelo usando roupa estilo Mike Tyson" />
-              <div class="card-label">Tyson Edge</div>
+          <div class="promo-stack">
+            <div class="promo-feature">
+              <span>Fit do look</span>
+              <strong>Descubra seu tamanho ideal em segundos.</strong>
+              <p>Calcule peito, cintura, quadril e altura para receber a recomendação certa.</p>
             </div>
-            <div class="mini-banner">
-              <span>100% original</span>
-              <strong>Entrega rápida</strong>
+            <div class="promo-feature promo-accent">
+              <span>Ofertas</span>
+              <strong>Até 35% OFF em peças selecionadas</strong>
+              <p>Promoções especiais com frete grátis para compras acima de R$ 250.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="promo-strip" aria-label="Promoções da Nexus">
+        <div class="promo-card">
+          <span>Promoção</span>
+          <strong>2 peças por R$ 299</strong>
+        </div>
+        <div class="promo-card destaque">
+          <span>Especial</span>
+          <strong>Frete grátis acima de R$ 250</strong>
+        </div>
+        <div class="promo-card">
+          <span>Cashback</span>
+          <strong>10% no PIX</strong>
         </div>
       </section>
 
@@ -84,7 +101,7 @@
               </div>
               <h4>Neymar Street</h4>
               <p>Malha premium, caimento moderno e visual de impacto.</p>
-              <button type="button">Comprar agora</button>
+              <button type="button" class="add-cart-btn" data-product="Neymar Street" data-price="189">Adicionar ao carrinho</button>
             </div>
           </article>
 
@@ -99,13 +116,13 @@
               </div>
               <h4>Tyson Power</h4>
               <p>Estilo agressivo, conforto máximo e presença no look.</p>
-              <button type="button">Comprar agora</button>
+              <button type="button" class="add-cart-btn" data-product="Tyson Power" data-price="249">Adicionar ao carrinho</button>
             </div>
           </article>
 
           <article class="product-card">
             <div class="product-image">
-              <img src="Camisa-neymar.jpg.jpg" alt="Jaqueta casual" />
+              <img src="jaqueta-realista.svg" alt="Jaqueta Nexus realista" />
             </div>
             <div class="product-body">
               <div class="product-topline">
@@ -114,13 +131,13 @@
               </div>
               <h4>Elite Flow</h4>
               <p>Proteção, movimento e visual urbano para o dia inteiro.</p>
-              <button type="button">Comprar agora</button>
+              <button type="button" class="add-cart-btn" data-product="Elite Flow" data-price="329">Adicionar ao carrinho</button>
             </div>
           </article>
         </div>
       </section>
 
-      <section class="fit-box">
+      <section class="fit-box" id="fit-box">
         <div class="section-label">fit assistant</div>
         <div class="calculator-grid">
           <div class="inputs">
@@ -167,6 +184,20 @@
                     <option value="moletom">Moletom</option>
                     <option value="jaqueta">Jaqueta</option>
                     <option value="calca">Calça</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  <span>Tamanho</span>
+                  <select id="tamanhoSelect">
+                    <option value="P">P</option>
+                    <option value="M" selected>M</option>
+                    <option value="G">G</option>
+                    <option value="GG">GG</option>
+                    <option value="G2">G2</option>
+                    <option value="G3">G3</option>
                   </select>
                 </label>
               </div>
@@ -230,6 +261,77 @@
       </section>
     </main>
 
+    <aside class="cart-panel" id="cartPanel" aria-label="Carrinho de compras">
+      <div class="cart-header">
+        <div>
+          <span class="section-label">carrinho</span>
+          <h3>Seu pedido</h3>
+        </div>
+        <button type="button" class="icon-btn cart-close" id="closeCartBtn" aria-label="Fechar carrinho">×</button>
+      </div>
+
+      <div class="cart-list" id="cartList">
+        <p class="cart-empty">Seu carrinho está vazio.</p>
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-total-row">
+          <span>Subtotal</span>
+          <strong id="cartTotal">R$ 0,00</strong>
+        </div>
+        <div class="cart-total-row discount-row">
+          <span>Desconto</span>
+          <strong id="cartDiscount">-R$ 0,00</strong>
+        </div>
+        <div class="cart-total-row delivery-row">
+          <span>Entrega</span>
+          <strong id="cartDelivery">R$ 0,00</strong>
+        </div>
+        <div class="cart-total-row final-row">
+          <span>Total</span>
+          <strong id="cartFinalTotal">R$ 0,00</strong>
+        </div>
+
+        <div class="mini-checkout" id="miniCheckout">
+          <span class="mini-checkout-label">Dados de entrega</span>
+          
+          <div class="checkout-fields">
+            <label>
+              <span>Nome Completo</span>
+              <input type="text" id="customerName" placeholder="Seu nome completo" />
+            </label>
+            <label>
+              <span>Rua</span>
+              <input type="text" id="customerStreet" placeholder="Nome da rua" />
+            </label>
+            <div class="row-fields">
+              <label>
+                <span>Número</span>
+                <input type="text" id="customerNumber" placeholder="123" />
+              </label>
+              <label>
+                <span>Complemento</span>
+                <input type="text" id="customerComplement" placeholder="Apto, sala..." />
+              </label>
+            </div>
+            <label>
+              <span>CEP</span>
+              <input type="text" id="customerCEP" placeholder="00000-000" />
+            </label>
+          </div>
+
+          <span class="mini-checkout-label">Método de Pagamento</span>
+          <div class="payment-option-list">
+            <button type="button" class="payment-option active" data-method="pix">PIX</button>
+            <button type="button" class="payment-option" data-method="cartao">Cartão</button>
+            <button type="button" class="payment-option" data-method="boleto">Boleto</button>
+          </div>
+        </div>
+
+        <button type="button" class="primary-btn cart-checkout">Finalizar Pedido</button>
+      </div>
+    </aside>
+
     <footer class="footer">
       <div class="footer-line"></div>
       <p>
@@ -266,9 +368,12 @@
               <option value="M" selected>M</option>
               <option value="G">G</option>
               <option value="GG">GG</option>
+              <option value="G2">G2</option>
+              <option value="G3">G3</option>
             </select>
           </label>
           <button type="button" id="assistantSuggest" class="primary-btn small-btn">Ajudar agora</button>
+          <button type="button" id="addToCartBtn" class="secondary-btn light">Adicionar ao carrinho</button>
         </div>
 
         <div class="assistant-payment">

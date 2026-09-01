@@ -1,0 +1,60 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="229" y1="76" x2="904" y2="1124" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#101923"/>
+      <stop offset="1" stop-color="#070C15"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="300" y1="225" x2="822" y2="1006" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A4F5D"/>
+      <stop offset="0.2" stop-color="#2A2F39"/>
+      <stop offset="0.65" stop-color="#171C26"/>
+      <stop offset="1" stop-color="#0D121B"/>
+    </linearGradient>
+    <linearGradient id="zip" x1="566" y1="280" x2="630" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4D7A3"/>
+      <stop offset="1" stop-color="#D4A666"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 440) rotate(90) scale(500 360)">
+      <stop stop-color="#F4D7A3" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#F4D7A3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <ellipse cx="600" cy="600" rx="440" ry="470" fill="url(#glow)"/>
+
+  <g>
+    <path d="M353 273L470 195H730L847 273L931 993C871 1046 789 1085 600 1085C411 1085 329 1046 269 993L353 273Z" fill="url(#shell)"/>
+    <path d="M474 206L600 130L726 206L675 318H525L474 206Z" fill="#141A24"/>
+    <path d="M493 270L600 222L707 270L668 372H532L493 270Z" fill="#1B2430"/>
+
+    <path d="M325 413L475 286L511 392L473 507L361 470L325 413Z" fill="#1B222C"/>
+    <path d="M875 413L725 286L689 392L727 507L839 470L875 413Z" fill="#1B222C"/>
+
+    <path d="M529 342H671V681H529V342Z" fill="#1E2533"/>
+    <path d="M600 302L620 514H580L600 302Z" fill="url(#zip)"/>
+    <path d="M600 308V960" stroke="url(#zip)" stroke-width="18" stroke-linecap="round"/>
+
+    <path d="M431 512L521 376L542 688L470 845L406 757L374 633L431 512Z" fill="#101821"/>
+    <path d="M769 512L679 376L658 688L730 845L794 757L826 633L769 512Z" fill="#101821"/>
+
+    <path d="M438 842H762L785 1015H415L438 842Z" fill="#0A0F17"/>
+    <path d="M470 844H730L744 991H456L470 844Z" fill="#0D1520"/>
+
+    <path d="M525 380C552 432 577 455 600 455C623 455 648 432 675 380" stroke="#E6C38A" stroke-width="9" stroke-linecap="round" opacity="0.7"/>
+    <path d="M543 551H657" stroke="#E6C38A" stroke-width="12" stroke-linecap="round" opacity="0.75"/>
+    <path d="M548 602H652" stroke="#E6C38A" stroke-width="9" stroke-linecap="round" opacity="0.7"/>
+
+    <path d="M363 738L447 692L500 902L406 936L363 738Z" fill="#0E1520"/>
+    <path d="M837 738L753 692L700 902L794 936L837 738Z" fill="#0E1520"/>
+  </g>
+
+  <g opacity="0.9">
+    <path d="M382 636C458 585 520 559 600 559C680 559 742 585 818 636" stroke="#E8C88B" stroke-width="7" stroke-linecap="round"/>
+    <path d="M408 710C472 671 528 655 600 655C672 655 728 671 792 710" stroke="#E8C88B" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <text x="600" y="1028" text-anchor="middle" fill="#F4D89A" font-size="84" font-family="Georgia, serif" font-weight="700" letter-spacing="4">NEXUS</text>
+  </g>
+</svg>
