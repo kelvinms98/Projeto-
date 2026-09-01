@@ -82,7 +82,15 @@ function calcularTamanho({ peito, cintura, quadril, altura, fitStyle, tipoPeca }
   }
 
   if (tipoPeca === 'calca') {
-    if (quadril > 105) tamanho = tamanho === 'M' ? 'G' : tamanho;
+    // Para calça, usa a medida de cintura em números
+    if (cintura < 68) tamanho = '34';
+    else if (cintura < 72) tamanho = '36';
+    else if (cintura < 76) tamanho = '38';
+    else if (cintura < 80) tamanho = '40';
+    else if (cintura < 84) tamanho = '42';
+    else if (cintura < 88) tamanho = '44';
+    else if (cintura < 92) tamanho = '46';
+    else tamanho = '48';
     descricao = 'Calça com conforto na cintura e ajuste firme no quadril.';
   }
 
