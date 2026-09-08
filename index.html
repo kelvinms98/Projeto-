@@ -27,7 +27,9 @@
       </div>
       <nav class="nav">
         <a href="#loja">Loja</a>
+        <p>•</p>
         <a href="#colecao">Coleção</a>
+        <p>•</p>
         <a href="#pagamentos">Pagamentos</a>
       </nav>
       <button type="button" class="cart-pill" id="cartToggle" aria-label="Abrir carrinho">
@@ -39,12 +41,41 @@
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <span class="tag">moda urbana premium</span>
-          <h2>Roupas que têm presença, poder e atitude.</h2>
+          <span style="
+  color: #C94A16; 
+  font-size: 40px; 
+  font-weight: 1000;
+  position: absolute;
+  top: 212px;
+  left: 135px;
+  transform: rotate(15deg);
+">❋</span>
+          <div style="
+  background: #C94A16; 
+  color: white; 
+  font-weight: 600; 
+  font-size: 22px; 
+  line-height: 0.9; 
+  padding: 8px 10px; 
+  border: 2.5px solid black; 
+  border-radius: 10px;
+  box-shadow: 2px 2px 0px black;
+  display: inline-block; 
+  transform: rotate(-6deg);
+  font-family: sans-serif;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+">
+  MODA URBANA<br>PREMIUM
+</div>
+          <h2 class="titulo-hero">
+            ROUPAS QUE TÊM PRESENÇA,
+          <span class="roxo">PODER E ATITUDE.</span>
+          </h2>
           <p>
-            A Nexus nasceu para vestir quem quer aparecer com estilo. Coleções
-            exclusivas, conforto de alta performance e uma assistente virtual
-            que te ajuda a escolher o tamanho certo antes de comprar.
+          A NEXUS NASCEU PARA VESTIR QUEM QUER APARECER COM ESTILO. COLEÇÕES EXCLUSIVAS, 
+          CONFORTO DE ALTA PERFORMANCE E UMA ASSISTENTE VIRTUAL QUE TE AJUDA A ESCOLHER 
+          O TAMANHO CERTO ANTES DE COMPRAR.
           </p>
           <div class="cta-row">
             <a href="#fit-box" class="primary-btn">Ver fit do look</a>
@@ -54,7 +85,15 @@
 
         <div class="hero-visual" id="loja">
           <div class="promo-stack">
+            
             <div class="promo-feature">
+              <span style="
+  color: #C94A16; 
+  font-size: 40px; 
+  position: absolute;
+  bottom: 420px;
+  right: 190px;
+">❋</span>
               <span>Fit do look</span>
               <strong>Descubra seu tamanho ideal em segundos.</strong>
               <p>Calcule peito, cintura, quadril e altura para receber a recomendação certa.</p>
@@ -359,7 +398,7 @@
       <small>© 2026 Nexus Store</small>
     </footer>
 
-    <div class="assistant-widget" id="assistantWidget">
+    <div class="assistant-widget closed" id="assistantWidget">
       <div class="assistant-header">
         <div class="assistant-avatar">N</div>
         <div class="assistant-title-wrap">
