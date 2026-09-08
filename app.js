@@ -481,3 +481,21 @@ updateCartCount();
 if (tamanhoResult && assistantSize) {
   assistantSize.value = tamanhoResult.textContent.trim();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const widget = document.getElementById('assistantWidget');
+  const toggle = document.getElementById('assistantToggle');
+  const closeBtn = document.getElementById('closeAssistant');
+  
+  widget.classList.add('closed');
+
+  toggle.onclick = () => widget.classList.remove('closed');
+  closeBtn.onclick = () => widget.classList.add('closed');
+  
+  document.getElementById('minimizeAssistant').onclick = () => {
+    widget.classList.toggle('minimized');
+  };
+  document.getElementById('maximizeAssistant').onclick = () => {
+    widget.classList.toggle('maximized');
+  };
+});
