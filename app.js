@@ -24,12 +24,184 @@ const customerComplement = document.getElementById('customerComplement');
 const customerCEP = document.getElementById('customerCEP');
 const installmentBox = document.getElementById('installmentBox');
 const installmentSelect = document.getElementById('installmentSelect');
+const themeToggle = document.getElementById('themeToggle');
+const favoritesToggle = document.getElementById('favoritesToggle');
+const favoritesPanel = document.getElementById('favoritesPanel');
+const closeFavoritesBtn = document.getElementById('closeFavoritesBtn');
+const favoritesList = document.getElementById('favoritesList');
+const favoritesCount = document.getElementById('favoritesCount');
+const searchInput = document.getElementById('searchInput');
+const searchSuggestions = document.getElementById('searchSuggestions');
+const heroSlides = document.querySelectorAll('.hero-slide');
+const slideCurrent = document.getElementById('slideCurrent');
+const previousSlideButton = document.getElementById('prevSlide');
+const nextSlideButton = document.getElementById('nextSlide');
 
 let cartItems = 0;
 let cartProducts = [];
 let selectedPaymentMethod = 'pix';
 const AUTO_DISCOUNT_PERCENT = 0.10;
 const DELIVERY_PRICE = 24.9;
+
+function setTheme(theme) {
+  document.body.classList.toggle('dark-theme', theme === 'dark');
+  if (themeToggle) themeToggle.textContent = theme === 'dark' ? '☀' : '☾';
+  localStorage.setItem('nexus-theme', theme);
+}
+
+setTheme(localStorage.getItem('nexus-theme') || 'light');
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    setTheme(document.body.classList.contains('dark-theme') ? 'light' : 'dark');
+  });
+}
+
+let activeSlide = 0;
+function showSlide(index) {
+  if (!heroSlides.length) return;
+  activeSlide = (index + heroSlides.length) % heroSlides.length;
+  heroSlides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === activeSlide));
+  if (slideCurrent) slideCurrent.textContent = String(activeSlide + 1).padStart(2, '0');
+}
+
+if (previousSlideButton) previousSlideButton.addEventListener('click', () => showSlide(activeSlide - 1));
+if (nextSlideButton) nextSlideButton.addEventListener('click', () => showSlide(activeSlide + 1));
+
+if (heroSlides.length > 1) {
+  setInterval(() => showSlide(activeSlide + 1), 4000);
+}
+
+const productCards = Array.from(document.querySelectorAll('.product-card'));
+const favoriteButtons = document.querySelectorAll('.favorite-btn');
+const savedFavorites = JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
+const productNames = productCards.map((card) => ({
+  name: card.querySelector('h4')?.textContent.trim() || '',
+  card,
+}));
+const categoryLinks = document.querySelectorAll('[data-category-filter]');
+
+function getSavedFavorites() {
+  return JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
+}
+
+function renderFavorites() {
+  const favorites = getSavedFavorites();
+  const favoriteProducts = productNames.filter(({ name }) => favorites.includes(name));
+
+  if (favoritesCount) favoritesCount.textContent = String(favoriteProducts.length);
+  if (!favoritesList) return;
+
+  favoritesList.innerHTML = favoriteProducts.length
+    ? favoriteProducts.map(({ name, card }) => `
+      <button type="button" class="favorite-item" data-favorite-link="${name}">
+        <span class="favorite-item-image"><img src="${card.querySelector('img')?.getAttribute('src') || ''}" alt="" /></span>
+        <span><strong>${name}</strong><small>${card.querySelector('.product-topline span')?.textContent || 'NEXUS'}</small></span>
+        <span class="favorite-item-arrow">›</span>
+      </button>
+    `).join('')
+    : '<p class="cart-empty">Você ainda não favoritou nenhuma peça.</p>';
+}
+
+function updateFavoriteButton(button, isFavorite) {
+  button.classList.toggle('is-favorite', isFavorite);
+  button.textContent = isFavorite ? '♥' : '♡';
+  button.setAttribute('aria-pressed', String(isFavorite));
+}
+
+favoriteButtons.forEach((button) => {
+  const productName = button.dataset.favoriteProduct;
+  updateFavoriteButton(button, savedFavorites.includes(productName));
+  button.addEventListener('click', () => {
+    const isFavorite = !button.classList.contains('is-favorite');
+    const favorites = JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
+    const nextFavorites = isFavorite
+      ? [...new Set([...favorites, productName])]
+      : favorites.filter((favorite) => favorite !== productName);
+    localStorage.setItem('nexus-favorites', JSON.stringify(nextFavorites));
+    updateFavoriteButton(button, isFavorite);
+    renderFavorites();
+  });
+});
+
+renderFavorites();
+
+if (favoritesToggle && favoritesPanel) {
+  favoritesToggle.addEventListener('click', () => {
+    renderFavorites();
+    favoritesPanel.classList.toggle('open');
+    cartPanel?.classList.remove('open');
+  });
+}
+
+if (closeFavoritesBtn && favoritesPanel) {
+  closeFavoritesBtn.addEventListener('click', () => favoritesPanel.classList.remove('open'));
+}
+
+if (favoritesList) {
+  favoritesList.addEventListener('click', (event) => {
+    const item = event.target.closest('[data-favorite-link]');
+    if (!item) return;
+    const product = productNames.find(({ name }) => name === item.dataset.favoriteLink);
+    if (!product) return;
+    product.card.hidden = false;
+    favoritesPanel?.classList.remove('open');
+    product.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
+function filterProducts(query) {
+  productNames.forEach(({ card }) => {
+    card.hidden = Boolean(query) && !card.textContent.toLowerCase().includes(query);
+  });
+}
+
+categoryLinks.forEach((link) => {
+  link.addEventListener('click', () => {
+    const category = link.dataset.categoryFilter || '';
+    if (searchInput) searchInput.value = '';
+    if (searchSuggestions) searchSuggestions.hidden = true;
+    filterProducts(category);
+  });
+});
+
+function renderSearchSuggestions(query) {
+  if (!searchSuggestions) return;
+  const matches = query
+    ? productNames.filter(({ name }) => name.toLowerCase().includes(query)).slice(0, 4)
+    : [];
+
+  searchSuggestions.innerHTML = matches
+    .map(({ name }) => `<li><button type="button" data-product-search="${name}">${name}</button></li>`)
+    .join('');
+  searchSuggestions.hidden = matches.length === 0;
+}
+
+if (searchInput) {
+  searchInput.addEventListener('input', (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    filterProducts(query);
+    renderSearchSuggestions(query);
+  });
+
+  searchInput.addEventListener('focus', () => {
+    renderSearchSuggestions(searchInput.value.trim().toLowerCase());
+  });
+}
+
+if (searchSuggestions) {
+  searchSuggestions.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-product-search]');
+    if (!button || !searchInput) return;
+    searchInput.value = button.dataset.productSearch;
+    filterProducts(searchInput.value.toLowerCase());
+    searchSuggestions.hidden = true;
+    document.getElementById('colecao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+document.addEventListener('click', (event) => {
+  if (searchSuggestions && !event.target.closest('.search-box')) searchSuggestions.hidden = true;
+});
 
 function calcularTamanho({ peito, cintura, quadril, altura, fitStyle, tipoPeca }) {
   const media = (peito + cintura + quadril) / 3;
