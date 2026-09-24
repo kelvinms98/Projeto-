@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Coordenador - NEXUS</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        .logout { display: inline-block; margin-top: 20px; color: #d9534f; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Painel Geral - Coordenador TI</h2>
+        <p>Bem-vindo, <strong>{{ nome }}</strong>!</p>
+        
+        <h3>Funcionários Cadastrados no NEXUS:</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Cargo</th>
+            </tr>
+            {% for func in funcionarios %}
+            <tr>
+                <td>{{ func.id_funcionario }}</td>
+                <td>{{ func.nome }}</td>
+                <td>{{ func.email }}</td>
+                <td>{{ func.cargo }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <a class="logout" href="/login">Sair / Trocar de conta</a>
+    </div>
+</body>
+</html>

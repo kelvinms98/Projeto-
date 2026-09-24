@@ -1,4 +1,4 @@
-﻿:root {
+﻿ da56dcfe-d7a7-4931-aa2c-e293b3fd4b29:root {
   --bg: #1a1a1a;
   --bg-2: #2a2a2a;
   --panel: rgba(30, 30, 30, 0.98);
@@ -58,13 +58,13 @@ h1, h2, h3, h4, h5, h6 {
   gap: 10px;
   padding: 9px 14px;
   border-radius: 6px;
-  background: #000000;
-  border: 1px solid #5a5a5a;
+  background: #ebe6e6;
+  border: 1px solid rgb(12, 12, 12);
   color: var(--text);
   font-weight: 900;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(245, 241, 241, 0.3);
 }
 
 .cart-pill strong {
@@ -329,12 +329,12 @@ main {
   gap: 8px;
   padding: 22px 20px;
   border-radius: 8px;
-  background: #2a2a2a;
-  border: 1px solid #4a4a4a;
+  background: #240054;
+  border: 1px solid #C94A16;
   box-shadow: var(--shadow);
 }
 .promo-card span {
-  color: #8a8a8a;
+  color: #C94A16;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
