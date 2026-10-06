@@ -1,28 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus Store | Moda Street</title>
-    <meta
-      name="description"
-      content="Nexus Store vende roupas com estilo streetwear e assistente virtual para indicar tamanho e métodos de pagamento."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css?v=9" />
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="brand-wrap">
-        <div class="brand-mark">N</div>
-        <div>
-          <p class="brand-kicker">streetwear store</p>
-          <h1>NEXUS</h1>
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Nexus Store | Moda Street</title>
+      <meta
+        name="description"
+        content="Nexus Store vende roupas com estilo streetwear e assistente virtual para indicar tamanho e métodos de pagamento."
+      />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&display=swap"
+        rel="stylesheet"
+      />
+      <link rel="stylesheet" href="style.css?v=9" />
+      <link rel="stylesheet" href="shop-header.css?v=1" />
+    </head>
+    <body>
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">N</div>
+          <div>
+            <p class="brand-kicker">streetwear store</p>
+            <h1>NEXUS</h1>
+          </div>
         </div>
       </div>
       <label class="search-box" aria-label="Buscar produtos">
@@ -42,6 +44,20 @@
             <a href="categoria.html?categoria=calca">Calças</a>
             <a href="categoria.html?categoria=bone">Bonés</a>
           </div>
+        </nav>
+        <div class="header-actions">
+          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema">☾</button>
+          <button type="button" class="favorites-toggle" id="favoritesToggle" aria-label="Abrir favoritos">
+            <span aria-hidden="true">♡</span>
+            <strong id="favoritesCount">0</strong>
+          </button>
+          <button type="button" class="cart-pill" id="cartToggle" aria-label="Abrir carrinho">
+            <span class="bag-icon" aria-hidden="true"></span>
+            <strong id="cartCount">0</strong>
+          </button>
+          <a class="store-account-link" href="conta.html" aria-label="Minha conta">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>
+          </a>
         </div>
         
         <!-- Link funcional para o próximo drop -->
@@ -348,13 +364,24 @@
             </label>
             <div class="row-fields">
               <label>
-                <span>Número</span>
-                <input type="text" id="customerNumber" placeholder="123" />
+                <span>Telefone</span>
+                <input type="tel" id="customerPhone" placeholder="(00) 00000-0000" autocomplete="tel" />
+              </label>
+              <label>
+                <span>Modalidade de entrega</span>
+                <select id="deliveryOption" required><option value="">Carregando opções...</option></select>
+              </label>
+              <p id="deliveryStatus" class="delivery-status" role="status"></p>
+              <div id="customerAddressFields">
+              <label>
+                <span>Rua</span>
+                <input type="text" id="customerStreet" placeholder="Nome da rua" />
               </label>
               <label>
                 <span>Complemento</span>
                 <input type="text" id="customerComplement" placeholder="Apto, sala..." />
               </label>
+              </div>
             </div>
             <label>
               <span>CEP</span>
@@ -369,25 +396,9 @@
             <button type="button" class="payment-option" data-method="boleto">Boleto</button>
           </div>
 
-          <div class="installment-box" id="installmentBox" style="display: none;">
-            <label>
-              <span>Parcelamento</span>
-              <select id="installmentSelect">
-                <option value="1">À vista (sem juros)</option>
-                <option value="2">2x de R$ 0,00</option>
-                <option value="3">3x de R$ 0,00</option>
-                <option value="4">4x de R$ 0,00</option>
-                <option value="5">5x de R$ 0,00</option>
-                <option value="6">6x de R$ 0,00</option>
-                <option value="7">7x de R$ 0,00</option>
-                <option value="8">8x de R$ 0,00</option>
-                <option value="9">9x de R$ 0,00</option>
-                <option value="10">10x de R$ 0,00</option>
-                <option value="11">11x de R$ 0,00</option>
-                <option value="12">12x de R$ 0,00</option>
-              </select>
-            </label>
-          </div>
+          <button type="button" class="primary-btn cart-checkout">Finalizar Pedido</button>
+          <p id="checkoutStatus" class="checkout-status" role="status" aria-live="polite"></p>
+          <p class="checkout-payment-note">O pedido ficará aguardando a confirmação do pagamento. O site ainda não processa pagamentos.</p>
         </div>
 
         <button type="button" class="primary-btn cart-checkout">Finalizar Pedido</button>
@@ -513,7 +524,10 @@
       N
     </button>
 
-    <script src="products.js?v=3"></script>
-    <script src="app.js?v=10"></script>
-  </body>
-</html>   
+      <script src="products.js?v=3"></script>
+      <script src="app.js?v=10"></script>
+      <script src="store-config.js?v=1"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script src="account.js?v=1"></script>
+    </body>
+  </html>
