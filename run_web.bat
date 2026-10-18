@@ -1,12 +1,22 @@
 @echo off
 setlocal
-cd /d %~dp0
+cd /d "%~dp0"
 echo.
-echo ===== Registro de Entregas =====
-echo Abra neste computador: http://localhost:8080
-echo Abra pela rede Wi-Fi: http://192.168.15.72:8080
-echo O computador e os celulares precisam estar na mesma rede.
+echo ===== Nexus Store + MySQL/XAMPP =====
+echo Abra a loja em http://localhost:8081
+echo No celular, use o IP deste computador na mesma rede Wi-Fi:
+ipconfig | findstr /i "IPv4"
+echo Deixe o MySQL do XAMPP iniciado antes de usar a loja.
 echo Pressione Ctrl+C para encerrar.
 echo.
-py -m http.server 8080 --bind 0.0.0.0
+
+set "NEXUS_WEB_HOST=0.0.0.0"
+set "NEXUS_WEB_PORT=8081"
+
+if exist ".venv\Scripts\python.exe" (
+    ".venv\Scripts\python.exe" app.py
+) else (
+    py -3 app.py
+)
+
 endlocal

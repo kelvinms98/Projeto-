@@ -5,8 +5,6 @@ const tamanhoResult = document.getElementById('tamanhoResult');
 const descricaoResult = document.getElementById('descricaoResult');
 const tipsList = document.getElementById('tipsList');
 const cartCount = document.getElementById('cartCount');
-const addCartButtons = document.querySelectorAll('.add-cart-btn');
-const cartToggle = document.getElementById('cartToggle');
 const cartPanel = document.getElementById('cartPanel');
 const closeCartBtn = document.getElementById('closeCartBtn');
 const cartList = document.getElementById('cartList');
@@ -24,7 +22,6 @@ const customerCEP = document.getElementById('customerCEP');
 const installmentBox = document.getElementById('installmentBox');
 const installmentSelect = document.getElementById('installmentSelect');
 const themeToggle = document.getElementById('themeToggle');
-const favoritesToggle = document.getElementById('favoritesToggle');
 const favoritesPanel = document.getElementById('favoritesPanel');
 const closeFavoritesBtn = document.getElementById('closeFavoritesBtn');
 const favoritesList = document.getElementById('favoritesList');
@@ -55,12 +52,6 @@ function setTheme(theme) {
 }
 
 setTheme(localStorage.getItem('nexus-theme') || 'light');
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    setTheme(document.body.classList.contains('dark-theme') ? 'light' : 'dark');
-  });
-}
-
 let activeSlide = 0;
 function showSlide(index) {
   if (!heroSlides.length) return;
@@ -94,34 +85,20 @@ if (heroSlides.length > 1) {
   setInterval(() => showSlide(activeSlide + 1), 4000);
 }
 
-const productCards = Array.from(document.querySelectorAll('.product-card'));
-const favoriteButtons = document.querySelectorAll('.favorite-btn');
-const savedFavorites = JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
-productCards.forEach((card) => {
-  const productId = card.dataset.productId;
-  const product = window.NEXUS_PRODUCTS?.[productId];
-  if (!product) return;
-  const detailUrl = `produto.html?id=${encodeURIComponent(productId)}`;
-  const image = card.querySelector('.product-image img');
-  const imageLink = document.createElement('a');
-  imageLink.className = 'product-detail-link';
-  imageLink.href = detailUrl;
-  imageLink.setAttribute('aria-label', `Ver detalhes de ${product.name}`);
-  image.replaceWith(imageLink);
-  imageLink.append(image);
-
-  const title = card.querySelector('h4');
-  const titleLink = document.createElement('a');
-  titleLink.className = 'product-title-link';
-  titleLink.href = detailUrl;
-  titleLink.textContent = product.name;
-  title.replaceChildren(titleLink);
-});
-const productNames = productCards.map((card) => ({
-  name: card.querySelector('h4')?.textContent.trim() || '',
-  card,
-}));
+const productGrid = document.getElementById('productGrid');
+let productNames = [];
+let activeCategory = '';
 const categoryLinks = document.querySelectorAll('[data-category-filter]');
+
+function escapeCatalogText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character]);
+}
 
 function getSavedFavorites() {
   return JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
@@ -135,10 +112,10 @@ function renderFavorites() {
   if (!favoritesList) return;
 
   favoritesList.innerHTML = favoriteProducts.length
-    ? favoriteProducts.map(({ name, card }) => `
-      <button type="button" class="favorite-item" data-favorite-link="${name}">
+    ? favoriteProducts.map(({ name, card, product }) => `
+      <button type="button" class="favorite-item" data-favorite-link="${escapeCatalogText(product.id)}">
         <span class="favorite-item-image"><img src="${card.querySelector('img')?.getAttribute('src') || ''}" alt="" /></span>
-        <span><strong>${name}</strong><small>${card.querySelector('.product-topline span')?.textContent || 'NEXUS'}</small></span>
+        <span><strong>${escapeCatalogText(name)}</strong><small>${escapeCatalogText(card.querySelector('.product-topline span')?.textContent || 'NEXUS')}</small></span>
         <span class="favorite-item-arrow">›</span>
       </button>
     `).join('')
@@ -151,30 +128,128 @@ function updateFavoriteButton(button, isFavorite) {
   button.setAttribute('aria-pressed', String(isFavorite));
 }
 
-favoriteButtons.forEach((button) => {
-  const productName = button.dataset.favoriteProduct;
-  updateFavoriteButton(button, savedFavorites.includes(productName));
-  button.addEventListener('click', () => {
-    const isFavorite = !button.classList.contains('is-favorite');
-    const favorites = JSON.parse(localStorage.getItem('nexus-favorites') || '[]');
-    const nextFavorites = isFavorite
-      ? [...new Set([...favorites, productName])]
-      : favorites.filter((favorite) => favorite !== productName);
-    localStorage.setItem('nexus-favorites', JSON.stringify(nextFavorites));
-    updateFavoriteButton(button, isFavorite);
-    renderFavorites();
-  });
-});
-
-renderFavorites();
-
-if (favoritesToggle && favoritesPanel) {
-  favoritesToggle.addEventListener('click', () => {
-    renderFavorites();
-    favoritesPanel.classList.toggle('open');
-    cartPanel?.classList.remove('open');
+function filterProducts(query = '', category = activeCategory) {
+  productNames.forEach(({ card, product }) => {
+    const matchesQuery = !query || card.textContent.toLowerCase().includes(query);
+    const matchesCategory = !category || product.categorySlug === category;
+    card.hidden = !matchesQuery || !matchesCategory;
   });
 }
+
+function renderCatalog(products) {
+  if (!productGrid) return;
+  if (!products.length) {
+    productGrid.innerHTML = '<p class="cart-empty">Não há produtos cadastrados no MySQL.</p>';
+    productNames = [];
+    renderFavorites();
+    return;
+  }
+
+  productGrid.innerHTML = products.map((product) => {
+    const availableVariant = product.variants.find((variant) =>
+      variant.stock > 0 && Number.isFinite(variant.price)
+    );
+    const colors = [...new Set(product.variants.map((variant) => variant.color).filter(Boolean))];
+    const sizes = [...new Set(product.variants.map((variant) => variant.size).filter(Boolean))];
+    const priceLabel = product.price === null
+      ? 'Preço não cadastrado'
+      : formatCurrency(product.price);
+    const variantsLabel = [
+      colors.length ? `Cores: ${colors.join(', ')}` : '',
+      sizes.length ? `Tamanhos: ${sizes.join(', ')}` : '',
+    ].filter(Boolean).join(' · ');
+
+    return `
+      <article class="product-card" data-product-id="${escapeCatalogText(product.id)}" data-category="${escapeCatalogText(product.categorySlug)}">
+        <div class="product-image">
+          <a class="product-detail-link" href="produto.html?id=${encodeURIComponent(product.id)}" aria-label="Ver detalhes de ${escapeCatalogText(product.name)}">
+            <img src="${escapeCatalogText(product.images[0])}" alt="${escapeCatalogText(product.name)}" />
+          </a>
+          <button type="button" class="favorite-btn" data-favorite-product="${escapeCatalogText(product.name)}" aria-label="Favoritar ${escapeCatalogText(product.name)}" aria-pressed="false">♡</button>
+        </div>
+        <div class="product-body">
+          <div class="product-topline"><span>${escapeCatalogText(product.category)}</span><strong>${escapeCatalogText(priceLabel)}</strong></div>
+          <h4><a class="product-title-link" href="produto.html?id=${encodeURIComponent(product.id)}">${escapeCatalogText(product.name)}</a></h4>
+          <p>${escapeCatalogText(variantsLabel || product.description)}</p>
+          <button type="button" class="add-cart-btn" data-product="${escapeCatalogText(product.name)}" data-product-variant="${availableVariant?.id ?? ''}" ${availableVariant ? '' : 'disabled'}>Adicionar ao carrinho</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  productNames = Array.from(productGrid.querySelectorAll('.product-card')).map((card) => ({
+    name: card.querySelector('h4')?.textContent.trim() || '',
+    card,
+    product: window.NEXUS_PRODUCTS[card.dataset.productId],
+  }));
+  productGrid.querySelectorAll('.favorite-btn').forEach((button) => {
+    updateFavoriteButton(button, getSavedFavorites().includes(button.dataset.favoriteProduct));
+  });
+  renderFavorites();
+  filterProducts(searchInput?.value.trim().toLowerCase() || '');
+}
+
+productGrid?.addEventListener('click', (event) => {
+  const favoriteButton = event.target.closest('.favorite-btn');
+  if (favoriteButton) {
+    const productName = favoriteButton.dataset.favoriteProduct;
+    const favorites = getSavedFavorites();
+    const isFavorite = favorites.includes(productName);
+    const nextFavorites = isFavorite
+      ? favorites.filter((favorite) => favorite !== productName)
+      : [...new Set([...favorites, productName])];
+    localStorage.setItem('nexus-favorites', JSON.stringify(nextFavorites));
+    updateFavoriteButton(favoriteButton, !isFavorite);
+    renderFavorites();
+    return;
+  }
+
+  const addButton = event.target.closest('.add-cart-btn');
+  if (!addButton) return;
+  const variantId = Number(addButton.dataset.productVariant);
+  const product = productNames
+    .map(({ product: catalogProduct }) => catalogProduct)
+    .find((catalogProduct) => catalogProduct.variants.some((variant) => variant.id === variantId));
+  const variant = product?.variants.find((item) => item.id === variantId);
+  if (!product || !variant || variant.stock < 1 || !Number.isFinite(variant.price)) {
+    addButton.disabled = true;
+    return;
+  }
+
+  const cartItem = cartProducts.find((item) => Number(item.productId) === variant.id);
+  if (cartItem && Number(cartItem.quantity || 1) >= variant.stock) {
+    addButton.disabled = true;
+    addButton.textContent = 'Estoque máximo no carrinho';
+    window.setTimeout(() => {
+      if (!addButton.isConnected) return;
+      addButton.disabled = false;
+      addButton.textContent = 'Adicionar ao carrinho';
+    }, 1800);
+    return;
+  }
+  if (cartItem) cartItem.quantity = Number(cartItem.quantity || 1) + 1;
+  else {
+    cartProducts.push({
+      id: `db-${variant.id}`,
+      productId: variant.id,
+      name: product.name,
+      size: variant.size,
+      color: variant.color,
+      price: variant.price,
+      quantity: 1,
+    });
+  }
+  updateCartCount();
+});
+
+window.NEXUS_PRODUCTS_READY
+  .then(renderCatalog)
+  .catch((error) => {
+    if (productGrid) {
+      productGrid.innerHTML = '<p class="cart-empty">Não foi possível carregar o catálogo do banco de dados.</p>';
+    }
+    console.error('Falha ao carregar produtos do MySQL:', error);
+  });
 
 if (closeFavoritesBtn && favoritesPanel) {
   closeFavoritesBtn.addEventListener('click', () => favoritesPanel.classList.remove('open'));
@@ -184,7 +259,7 @@ if (favoritesList) {
   favoritesList.addEventListener('click', (event) => {
     const item = event.target.closest('[data-favorite-link]');
     if (!item) return;
-    const product = productNames.find(({ name }) => name === item.dataset.favoriteLink);
+    const product = productNames.find(({ product: catalogProduct }) => catalogProduct.id === item.dataset.favoriteLink);
     if (!product) return;
     product.card.hidden = false;
     favoritesPanel?.classList.remove('open');
@@ -192,18 +267,12 @@ if (favoritesList) {
   });
 }
 
-function filterProducts(query) {
-  productNames.forEach(({ card }) => {
-    card.hidden = Boolean(query) && !card.textContent.toLowerCase().includes(query);
-  });
-}
-
 categoryLinks.forEach((link) => {
   link.addEventListener('click', () => {
-    const category = link.dataset.categoryFilter || '';
+    activeCategory = link.dataset.categoryFilter || '';
     if (searchInput) searchInput.value = '';
     if (searchSuggestions) searchSuggestions.hidden = true;
-    filterProducts(category);
+    filterProducts('', activeCategory);
   });
 });
 
@@ -214,7 +283,7 @@ function renderSearchSuggestions(query) {
     : [];
 
   searchSuggestions.innerHTML = matches
-    .map(({ name }) => `<li><button type="button" data-product-search="${name}">${name}</button></li>`)
+    .map(({ name }) => `<li><button type="button" data-product-search="${escapeCatalogText(name)}">${escapeCatalogText(name)}</button></li>`)
     .join('');
   searchSuggestions.hidden = matches.length === 0;
 }
@@ -222,7 +291,7 @@ function renderSearchSuggestions(query) {
 if (searchInput) {
   searchInput.addEventListener('input', (event) => {
     const query = event.target.value.trim().toLowerCase();
-    filterProducts(query);
+    filterProducts(query, activeCategory);
     renderSearchSuggestions(query);
   });
 
@@ -236,7 +305,7 @@ if (searchSuggestions) {
     const button = event.target.closest('[data-product-search]');
     if (!button || !searchInput) return;
     searchInput.value = button.dataset.productSearch;
-    filterProducts(searchInput.value.toLowerCase());
+    filterProducts(searchInput.value.toLowerCase(), activeCategory);
     searchSuggestions.hidden = true;
     document.getElementById('colecao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -621,30 +690,6 @@ closeAssistant.addEventListener('click', closeAssistantPanel);
 minimizeAssistant.addEventListener('click', toggleMinimize);
 maximizeAssistant.addEventListener('click', toggleMaximize);
 
-addCartButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    cartItems += 1;
-    const productName = button.dataset.product || 'Produto';
-    const productId = button.closest('.product-card')?.dataset.productId;
-    const selectedSize = window.NEXUS_PRODUCTS?.[productId]?.sizes?.[0] || 'M';
-    const price = Number(button.dataset.price || 0);
-    cartProducts.push({ id: `${productName}-${selectedSize}-${Date.now()}`, name: productName, size: selectedSize, price });
-    cartItems = cartProducts.length;
-    updateCartCount();
-    if (cartPanel) {
-      cartPanel.classList.add('open');
-    }
-  });
-});
-
-if (cartToggle) {
-  cartToggle.addEventListener('click', () => {
-    if (cartPanel) {
-      cartPanel.classList.toggle('open');
-    }
-  });
-}
-
 if (closeCartBtn && cartPanel) {
   closeCartBtn.addEventListener('click', () => {
     cartPanel.classList.remove('open');
@@ -743,27 +788,10 @@ document.addEventListener('DOMContentLoaded', () => {
 const exclusiveTab = document.querySelector('.exclusive-tab');
 
 if (exclusiveTab) {
-  exclusiveTab.addEventListener('click', () => {
-    // Insira aqui o que deseja que aconteça ao clicar
-    alert('Bem-vindo ao seu Espaço VIP!');
-    
-// Roda suavemente até o próximo drop ao clicar em Meu Espaço
-(() => {
-  const exclusiveTabLink = document.querySelector('.exclusive-tab');
-
-  if (exclusiveTabLink) {
-    exclusiveTabLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetHash = exclusiveTabLink.getAttribute('href');
-      const targetEl = document.querySelector(targetHash);
-      
-      if (targetEl) {
-        targetEl.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    });
-  }
-})(); 
-'}'
+  exclusiveTab.addEventListener('click', (event) => {
+    const target = document.querySelector(exclusiveTab.getAttribute('href'));
+    if (!target) return;
+    event.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}

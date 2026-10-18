@@ -1,7 +1,8 @@
+(() => {
 const themeToggle = document.getElementById('themeToggle');
 const favoritesToggle = document.getElementById('favoritesToggle');
 const cartToggle = document.getElementById('cartToggle');
-const shopProducts = Object.values(window.NEXUS_PRODUCTS || {});
+let shopProducts = [];
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function escapeShopText(value) {
@@ -61,7 +62,7 @@ function renderCart() {
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
   list.innerHTML = cart.map((item) => {
     const id = encodeURIComponent(String(item.id));
-    return `<article class="shop-cart-item"><div><strong>${escapeShopText(item.name)}</strong><small>Tamanho ${escapeShopText(item.size || 'M')}</small><b>${currency.format(Number(item.price || 0) * Number(item.quantity || 1))}</b></div><div class="shop-quantity"><button type="button" data-cart-action="minus" data-cart-id="${id}" aria-label="Diminuir quantidade">−</button><span>${Number(item.quantity || 1)}</span><button type="button" data-cart-action="plus" data-cart-id="${id}" aria-label="Aumentar quantidade">+</button><button type="button" class="shop-remove" data-cart-action="remove" data-cart-id="${id}">Remover</button></div></article>`;
+    return `<article class="shop-cart-item"><div><strong>${escapeShopText(item.name)}</strong><small>${escapeShopText(item.color || 'Cor não informada')} · Tamanho ${escapeShopText(item.size || '—')}</small><b>${currency.format(Number(item.price || 0) * Number(item.quantity || 1))}</b></div><div class="shop-quantity"><button type="button" data-cart-action="minus" data-cart-id="${id}" aria-label="Diminuir quantidade">−</button><span>${Number(item.quantity || 1)}</span><button type="button" data-cart-action="plus" data-cart-id="${id}" aria-label="Aumentar quantidade">+</button><button type="button" class="shop-remove" data-cart-action="remove" data-cart-id="${id}">Remover</button></div></article>`;
   }).join('');
   footer.innerHTML = `
     <div><span>Subtotal</span><strong>${currency.format(subtotal)}</strong></div>
@@ -77,6 +78,7 @@ function renderCart() {
         <label>Complemento<input id="shopComplement" /></label>
       </div>
       <label>Nome para o pedido<input id="shopName" autocomplete="name" /></label>
+      <label>E-mail para confirmação<input id="shopEmail" type="email" autocomplete="email" /></label>
       <label>Telefone<input id="shopPhone" autocomplete="tel" /></label>
       <label>Pagamento<select id="shopPaymentMethod"><option value="pix">PIX · 10% de desconto</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option></select></label>
       <p class="shop-order-note">O pedido ficará aguardando a confirmação do pagamento. O site não processa pagamentos nesta etapa.</p>
@@ -104,7 +106,13 @@ function renderCart() {
     deliverySelect.innerHTML = options.map((option) =>
       `<option value="${escapeShopText(option.id)}">${escapeShopText(option.name)} · ${currency.format(option.fee)} · ${escapeShopText(option.estimate)}</option>`).join('');
     deliverySelect.disabled = options.length === 0;
-    if (!options.length) document.getElementById('shopDeliveryStatus').textContent = 'Configure a conexão com o banco para carregar as modalidades.';
+    if (!options.length) {
+      const status = document.getElementById('shopDeliveryStatus');
+      if (!status.textContent) {
+        status.textContent = window.NEXUS_DELIVERY_ERROR
+          || 'Não há modalidades de entrega disponíveis no banco de dados.';
+      }
+    }
     updateTotals();
   });
 }
@@ -114,7 +122,7 @@ function renderFavorites() {
   const savedProducts = shopProducts.filter((product) => favorites.includes(product.name));
   const list = document.getElementById('shopFavoritesList');
   list.innerHTML = savedProducts.length
-    ? savedProducts.map((product) => `<a class="shop-favorite-item" href="produto.html?id=${encodeURIComponent(product.id)}"><img src="${product.images[0]}" alt="" /><span><strong>${product.name}</strong><small>${currency.format(product.price)}</small></span><span aria-hidden="true">›</span></a>`).join('')
+    ? savedProducts.map((product) => `<a class="shop-favorite-item" href="produto.html?id=${encodeURIComponent(product.id)}"><img src="${escapeShopText(product.images[0])}" alt="" /><span><strong>${escapeShopText(product.name)}</strong><small>${Number.isFinite(product.price) ? currency.format(product.price) : 'Preço não cadastrado'}</small></span><span aria-hidden="true">›</span></a>`).join('')
     : '<p class="shop-drawer-empty">Você ainda não favoritou nenhuma peça.</p>';
 }
 
@@ -150,6 +158,15 @@ function openDrawer(kind) {
 setTheme(localStorage.getItem('nexus-theme') || 'light');
 ensureDrawers();
 updateCounts();
+window.NEXUS_PRODUCTS_READY
+  .then((products) => {
+    shopProducts = products;
+    updateCounts();
+    renderFavorites();
+  })
+  .catch((error) => {
+    console.error('Falha ao carregar os produtos do MySQL:', error);
+  });
 
 themeToggle.addEventListener('click', () => setTheme(document.body.classList.contains('dark-theme') ? 'light' : 'dark'));
 cartToggle.addEventListener('click', () => openDrawer('cart'));
@@ -179,6 +196,13 @@ document.addEventListener('click', (event) => {
     });
   }
 
+  if (event.target.closest('.add-cart-btn')) {
+    requestAnimationFrame(() => {
+      updateCounts();
+      renderCart();
+      openDrawer('cart');
+    });
+  }
   if (event.target.closest('#detailAddCart, #detailBuyNow')) requestAnimationFrame(updateCounts);
 });
 
@@ -192,3 +216,4 @@ window.addEventListener('storage', (event) => {
     renderFavorites();
   }
 });
+})();

@@ -87,29 +87,23 @@
   }
 
   async function loadDeliveryOptions() {
-    if (!client) return [];
-    const { data, error } = await client.from('delivery_options')
-      .select('id,name,fee,estimate,requires_address').eq('active', true).order('display_order');
-    if (error) throw error;
-    window.NEXUS_DELIVERY_OPTIONS = data || [];
+    const response = await fetch('/api/delivery-options');
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Não foi possível carregar as opções de entrega.');
+    window.NEXUS_DELIVERY_OPTIONS = result.data || [];
+    window.NEXUS_DELIVERY_ERROR = '';
     return window.NEXUS_DELIVERY_OPTIONS;
   }
 
-  async function createOrder({ items, deliveryOptionId, paymentMethod, customerName, phone, street, number, complement, cep }) {
-    if (!client || !currentUser) throw new Error('Entre na sua conta antes de confirmar o pedido.');
-    const { data, error } = await client.rpc('create_store_order', {
-      p_items: items.map((item) => ({ name: item.name, size: item.size || 'M', quantity: Number(item.quantity || 1) })),
-      p_delivery_option_id: deliveryOptionId,
-      p_payment_method: paymentMethod,
-      p_customer_name: customerName,
-      p_customer_phone: phone || null,
-      p_street: street || null,
-      p_number: number || null,
-      p_complement: complement || null,
-      p_cep: cep || null
+  async function createOrder(order) {
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
     });
-    if (error) throw error;
-    return data;
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Não foi possível registrar o pedido.');
+    return result;
   }
 
   window.NexusStoreAccount = { client, ready, getUser: () => currentUser, loadDeliveryOptions, createOrder };
@@ -119,7 +113,7 @@
       const target = event.target.closest('#detailFavorite, .favorite-btn, #detailAddCart, .add-cart-btn, #detailBuyNow');
       const checkout = event.target.closest('.cart-checkout, [data-confirm-order]');
       if (!target && !checkout) return;
-      if (!currentUser) {
+      if (!currentUser && target?.matches('#detailFavorite, .favorite-btn')) {
         event.preventDefault();
         event.stopImmediatePropagation();
         await ready;
@@ -153,8 +147,13 @@
         : document.querySelector('.payment-option.active')?.dataset.method;
       const options = window.NEXUS_DELIVERY_OPTIONS || [];
       const delivery = options.find((option) => option.id === selectedDelivery?.value);
-      if (!localCart.length || !delivery || !paymentMethod) {
-        window.alert('O carrinho está vazio ou as opções de entrega ainda não carregaram.');
+      if (!localCart.length) {
+        window.alert('O carrinho está vazio.');
+        return;
+      }
+      if (!delivery || !paymentMethod) {
+        const deliveryStatus = document.getElementById(isDrawer ? 'shopDeliveryStatus' : 'deliveryStatus')?.textContent;
+        window.alert(deliveryStatus || 'As opções de entrega ainda não estão disponíveis.');
         return;
       }
       const orderData = {
@@ -162,6 +161,7 @@
         deliveryOptionId: delivery.id,
         paymentMethod,
         customerName: field('Name', 'customerName'),
+        customerEmail: currentUser?.email || field('Email', 'customerEmail'),
         phone: field('Phone', 'customerPhone'),
         street: field('Street', 'customerStreet'),
         number: field('Number', 'customerNumber'),
@@ -177,14 +177,29 @@
         message(status, 'Informe o nome que deve constar no pedido.');
         return;
       }
+      if (!emailPattern.test(orderData.customerEmail)) {
+        message(status, 'Informe um e-mail válido para receber a confirmação do pedido.');
+        return;
+      }
       const submitButton = checkout;
       submitButton.disabled = true;
       try {
-        await createOrder(orderData);
+        const receipt = await createOrder(orderData);
         localStorage.setItem('nexus-cart', '[]');
-        localStorage.setItem(`nexus-cart:${currentUser.id}`, '[]');
-        sessionStorage.setItem('nexus-order-notice', 'Pedido registrado e aguardando confirmação do pagamento.');
-        window.location.reload();
+        if (currentUser) localStorage.setItem(`nexus-cart:${currentUser.id}`, '[]');
+        if (isDrawer) {
+          const list = document.getElementById('shopCartList');
+          const footer = document.getElementById('shopCartFooter');
+          list.textContent = `Pedido #${receipt.orderId} registrado. Aguardando confirmação do pagamento.`;
+          footer.innerHTML = '<button type="button" class="shop-continue-button">Continuar comprando</button>';
+          document.getElementById('cartCount').textContent = '0';
+        } else {
+          sessionStorage.setItem(
+            'nexus-order-notice',
+            `Pedido #${receipt.orderId} registrado e aguardando confirmação do pagamento.`
+          );
+          window.location.reload();
+        }
       } catch (error) {
         message(status, error.message || 'Não foi possível registrar o pedido.');
         submitButton.disabled = false;
@@ -367,32 +382,29 @@
       sessionStorage.removeItem('nexus-order-notice');
       message(document.getElementById('checkoutStatus'), notice, false);
     }
-    if (!client) {
-      window.NEXUS_DELIVERY_OPTIONS = [];
-      document.querySelectorAll('#deliveryOption').forEach((select) => {
-        select.innerHTML = '<option value="">Conexão com o banco não configurada</option>';
-        select.disabled = true;
-      });
-      document.querySelectorAll('#deliveryStatus').forEach((element) => {
-        element.textContent = 'Configure o Supabase para carregar as modalidades de entrega.';
-      });
-      updateAccountLinks();
-      readyResolve();
-      return;
-    }
-    const { data } = await client.auth.getSession();
-    if (data.session?.user) await showSignedIn(data.session.user);
-    else updateAccountLinks();
-    client.auth.onAuthStateChange((_event, session) => {
-      const nextUser = session?.user || null;
-      if (currentUser?.id !== nextUser?.id) {
-        if (currentUser) persistShoppingState(currentUser);
-        if (nextUser) activateShoppingState(nextUser);
-        else clearActiveShoppingState();
+    if (client) {
+      try {
+        const { data } = await client.auth.getSession();
+        if (data.session?.user) await showSignedIn(data.session.user);
+        else updateAccountLinks();
+        client.auth.onAuthStateChange((_event, session) => {
+          const nextUser = session?.user || null;
+          if (currentUser?.id !== nextUser?.id) {
+            if (currentUser) persistShoppingState(currentUser);
+            if (nextUser) activateShoppingState(nextUser);
+            else clearActiveShoppingState();
+          }
+          currentUser = nextUser;
+          updateAccountLinks();
+        });
+      } catch (error) {
+        updateAccountLinks();
+        if (accountPage) message(document.getElementById('accountMessage'), error.message);
       }
-      currentUser = nextUser;
+    } else {
       updateAccountLinks();
-    });
+    }
+
     try {
       const options = await loadDeliveryOptions();
       document.querySelectorAll('#deliveryOption').forEach((select) => {
@@ -407,7 +419,18 @@
         select.dispatchEvent(new Event('change', { bubbles: true }));
       });
     } catch (error) {
-      document.querySelectorAll('#deliveryStatus').forEach((element) => { element.textContent = `Não foi possível carregar as entregas: ${error.message}`; });
+      window.NEXUS_DELIVERY_OPTIONS = [];
+      window.NEXUS_DELIVERY_ERROR = error.message || 'Não foi possível carregar as opções de entrega.';
+      document.querySelectorAll('#deliveryOption').forEach((select) => {
+        select.innerHTML = '<option value="">Entrega indisponível</option>';
+        select.disabled = true;
+      });
+      document.querySelectorAll('#deliveryStatus').forEach((element) => {
+        element.textContent = `Não foi possível carregar as entregas: ${error.message}`;
+      });
+      document.querySelectorAll('#shopDeliveryStatus').forEach((element) => {
+        element.textContent = `Não foi possível carregar as entregas: ${error.message}`;
+      });
     }
     readyResolve();
     if (currentUser) replayPendingAction();

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#171717" />
+  <title>Área de funcionários | NEXUS</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, "Segoe UI", Arial, sans-serif; color: #20211e; background: #f4f3ef; }
+    * { box-sizing: border-box; }
+    body { display: grid; min-height: 100svh; margin: 0; padding: 24px; place-items: center; }
+    .login-card { width: min(100%, 420px); padding: clamp(24px, 6vw, 42px); border: 1px solid #e1dfd8; background: #fff; box-shadow: 0 18px 55px #17171712; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+    .brand-mark { display: grid; width: 42px; height: 42px; place-items: center; background: #171717; color: #fff; font-size: 1.2rem; font-weight: 900; transform: skew(-7deg); }
+    .brand small { display: block; color: #77766f; font-size: .67rem; letter-spacing: .16em; text-transform: uppercase; }
+    .brand strong { display: block; margin-top: 2px; font-size: 1.1rem; letter-spacing: .16em; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 5vw, 2rem); }
+    .intro { margin: 0 0 24px; color: #72716b; line-height: 1.55; }
+    form { display: grid; gap: 15px; }
+    label { display: grid; gap: 7px; font-size: .82rem; font-weight: 700; }
+    input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #d5d3cc; border-radius: 3px; background: #fff; color: inherit; font: inherit; }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #ff8a61; outline-offset: 2px; }
+    button { min-height: 48px; margin-top: 4px; border: 0; border-radius: 3px; background: #171717; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+    button:hover { background: #e64d1a; }
+    .error { margin: 0 0 18px; padding: 12px; border-left: 3px solid #bf3f2a; background: #fff0ed; color: #84271b; font-size: .85rem; line-height: 1.45; }
+    .back { display: inline-block; margin-top: 22px; color: #56554f; font-size: .82rem; text-decoration: underline; text-underline-offset: 3px; }
+    @media (max-width: 420px) { body { padding: 14px; } }
+  </style>
+</head>
+<body>
+  <main class="login-card">
+    <div class="brand"><span class="brand-mark">N</span><span><small>Área de funcionários</small><strong>NEXUS</strong></span></div>
+    <h1>Acesse o painel</h1>
+    <p class="intro">Entre com seu e-mail corporativo para consultar produtos, estoque e pedidos internos.</p>
+    {% if erro %}<p class="error" role="alert">{{ erro }}</p>{% endif %}
+    <form action="{{ url_for('login') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+      <label for="email">E-mail corporativo
+        <input type="email" id="email" name="email" autocomplete="username" required />
+      </label>
+      <label for="senha">Senha
+        <input type="password" id="senha" name="senha" autocomplete="current-password" required />
+      </label>
+      <button type="submit">Entrar no painel</button>
+    </form>
+    <a class="back" href="{{ url_for('index') }}">Voltar para a loja</a>
+  </main>
+</body>
+</html>
