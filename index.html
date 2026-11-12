@@ -15,7 +15,7 @@
         rel="stylesheet"
       />
       <link rel="stylesheet" href="style.css?v=11" />
-      <link rel="stylesheet" href="shop-header.css?v=1" />
+      <link rel="stylesheet" href="shop-header.css?v=2" />
     </head>
     <body>
       <header class="topbar">
@@ -34,6 +34,7 @@
         <a href="#loja">LOJA</a>
         <a href="#colecao">COLEÇÃO</a>
         <a href="#pagamentos">PAGAMENTOS</a>
+        <a href="/login">ADMIN</a>
         <div class="category-menu">
           <button type="button" id="categoriesToggle" aria-expanded="false" aria-controls="categoryMenu">CATEGORIAS</button>
           <div class="category-menu-list" id="categoryMenu" hidden>
@@ -355,25 +356,24 @@
                 <input type="tel" id="customerPhone" placeholder="(00) 00000-0000" autocomplete="tel" />
               </label>
               <label>
+                <span>CEP de destino</span>
+                <input type="text" id="customerCEP" placeholder="00000-000" autocomplete="postal-code" inputmode="numeric" />
+              </label>
+              <button type="button" class="shipping-quote-button" data-calculate-shipping="main">Calcular frete</button>
+              <p id="deliveryStatus" class="delivery-status" role="status"></p>
+              <label>
                 <span>Modalidade de entrega</span>
                 <select id="deliveryOption" required><option value="">Carregando opções...</option></select>
               </label>
-              <p id="deliveryStatus" class="delivery-status" role="status"></p>
               <div id="customerAddressFields">
                 <label>
                   <span>Rua</span>
                   <input type="text" id="customerStreet" placeholder="Nome da rua" autocomplete="street-address" />
                 </label>
-                <div class="row-fields">
-                  <label>
-                    <span>Número</span>
-                    <input type="text" id="customerNumber" placeholder="Número" />
-                  </label>
-                  <label>
-                    <span>CEP</span>
-                    <input type="text" id="customerCEP" placeholder="00000-000" autocomplete="postal-code" />
-                  </label>
-                </div>
+                <label>
+                  <span>Número</span>
+                  <input type="text" id="customerNumber" placeholder="Número" />
+                </label>
                 <label>
                   <span>Complemento</span>
                   <input type="text" id="customerComplement" placeholder="Apto, sala..." />
@@ -434,6 +434,7 @@
           <h3>Atendimento</h3>
           <p>Rua Augusta, 1480<br />Consolação, São Paulo - SP<br />CEP 01304-001</p>
           <p>Telefone: (11) 3456-7890<br />WhatsApp: (11) 99876-2025<br />contato@nexusstore.com.br</p>
+          <p><a href="/acompanhar-pedido.html">Acompanhar pedido</a></p>
           <p><a href="/login">Área de funcionários</a></p>
         </div>
         <div class="footer-column">
@@ -518,11 +519,10 @@
       N
     </button>
 
-      <script src="products.js?v=4"></script>
-      <script src="app.js?v=12"></script>
-      <script src="shop-header.js?v=3"></script>
-      <script src="store-config.js?v=1"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script src="account.js?v=2"></script>
+      <script src="products.js?v=5"></script>
+      <script src="admin-shortcut.js?v=1"></script>
+      <script src="app.js?v=13"></script>
+      <script src="shop-header.js?v=4"></script>
+      <script src="account.js?v=4"></script>
     </body>
   </html>

@@ -139,7 +139,7 @@ function filterProducts(query = '', category = activeCategory) {
 function renderCatalog(products) {
   if (!productGrid) return;
   if (!products.length) {
-    productGrid.innerHTML = '<p class="cart-empty">Não há produtos cadastrados no MySQL.</p>';
+    productGrid.innerHTML = '<p class="cart-empty">Não há produtos cadastrados.</p>';
     productNames = [];
     renderFavorites();
     return;
@@ -248,7 +248,7 @@ window.NEXUS_PRODUCTS_READY
     if (productGrid) {
       productGrid.innerHTML = '<p class="cart-empty">Não foi possível carregar o catálogo do banco de dados.</p>';
     }
-    console.error('Falha ao carregar produtos do MySQL:', error);
+    console.error('Falha ao carregar produtos do servidor local:', error);
   });
 
 if (closeFavoritesBtn && favoritesPanel) {
@@ -754,6 +754,7 @@ if (cartCheckout) {
 }
 
 document.getElementById('deliveryOption')?.addEventListener('change', renderCart);
+window.addEventListener('nexus:shipping-quote-updated', renderCart);
 
 assistantToggle.style.display = 'block';
 updateCartCount();

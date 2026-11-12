@@ -1,11 +1,8 @@
 (() => {
-  const config = window.NEXUS_STORE_CONFIG || {};
-  const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey && window.supabase?.createClient);
-  const client = configured ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
   const accountPage = document.body.classList.contains('account-page');
-  const configMissingMessage = 'O cadastro não está disponível no momento. Tente novamente mais tarde.';
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let currentUser = null;
+  let csrfTokenValue = '';
   let readyResolve;
   const ready = new Promise((resolve) => { readyResolve = resolve; });
 
@@ -13,6 +10,21 @@
     if (!element) return;
     element.textContent = text;
     element.classList.toggle('is-success', !isError);
+  }
+
+  async function customerRequest(url, { method = 'GET', body } = {}) {
+    const headers = {};
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (method !== 'GET') headers['X-CSRF-Token'] = csrfTokenValue;
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Não foi possível concluir a solicitação.');
+    if (result.data?.csrfToken) csrfTokenValue = result.data.csrfToken;
+    return result.data;
   }
 
   function escapeHtml(value) {
@@ -23,6 +35,15 @@
 
   function formatMoney(value) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+  }
+
+  function appendTrackingLink(element, token) {
+    if (!element || !/^[a-f0-9]{64}$/i.test(String(token || ''))) return;
+    const link = document.createElement('a');
+    link.className = 'nexus-order-track-link';
+    link.href = `/acompanhar-pedido.html?token=${encodeURIComponent(token)}`;
+    link.textContent = 'Acompanhar pedido';
+    element.append(document.createElement('br'), link);
   }
 
   function persistShoppingState(user = currentUser) {
@@ -95,10 +116,79 @@
     return window.NEXUS_DELIVERY_OPTIONS;
   }
 
+  function normalizeCep(value) {
+    return String(value || '').replace(/\D/g, '');
+  }
+
+  function validCep(value) {
+    return /^\d{5}-?\d{3}$/.test(String(value || '').trim());
+  }
+
+  function renderDeliveryOptions() {
+    const options = window.NEXUS_DELIVERY_OPTIONS || [];
+    document.querySelectorAll('#deliveryOption, #shopDeliveryOption').forEach((select) => {
+      const isDrawer = select.id === 'shopDeliveryOption';
+      const cep = normalizeCep(document.getElementById(isDrawer ? 'shopCEP' : 'customerCEP')?.value);
+      const quote = window.NEXUS_SHIPPING_QUOTE;
+      const validQuote = validCep(document.getElementById(isDrawer ? 'shopCEP' : 'customerCEP')?.value)
+        && quote?.cep === cep;
+      const previous = select.value;
+      select.innerHTML = options.map((option) => {
+        const fee = option.requires_address && validQuote ? quote.fee : option.fee;
+        const estimate = option.requires_address && validQuote
+          ? `frete fixo ${formatMoney(quote.baseFee)} + serviço ${formatMoney(quote.serviceFee)}`
+          : option.estimate;
+        const disabled = option.requires_address && !validQuote ? ' disabled' : '';
+        return `<option value="${escapeHtml(option.id)}"${disabled}>${escapeHtml(option.name)} · ${formatMoney(fee)} · ${escapeHtml(estimate)}</option>`;
+      }).join('');
+      if (options.some((option) => option.id === previous
+        && (!option.requires_address || validQuote))) {
+        select.value = previous;
+      } else if (select.value && options.some((option) => option.id === select.value && option.requires_address)) {
+        select.value = '';
+      }
+    });
+  }
+
+  async function refreshShippingQuote(cepValue, formName) {
+    const cep = normalizeCep(cepValue);
+    const statusId = formName === 'shop' ? 'shopDeliveryStatus' : 'deliveryStatus';
+    const status = document.getElementById(statusId);
+    if (!validCep(cepValue)) {
+      window.NEXUS_SHIPPING_QUOTE = null;
+      renderDeliveryOptions();
+      message(status, 'Informe um CEP de destino válido com 8 dígitos.');
+      return;
+    }
+    message(status, 'Calculando a taxa fixa para este CEP...', false);
+    try {
+      const response = await fetch('/api/shipping-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfTokenValue },
+        body: JSON.stringify({ cep }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível calcular o frete.');
+      window.NEXUS_SHIPPING_QUOTE = result.data;
+      renderDeliveryOptions();
+      window.dispatchEvent(new CustomEvent('nexus:shipping-quote-updated', { detail: result.data }));
+      message(
+        status,
+        `Frete ${formatMoney(result.data.baseFee)} + serviço ${formatMoney(result.data.serviceFee)} = ${formatMoney(result.data.fee)}.`,
+        false,
+      );
+    } catch (error) {
+      window.NEXUS_SHIPPING_QUOTE = null;
+      renderDeliveryOptions();
+      window.dispatchEvent(new CustomEvent('nexus:shipping-quote-updated', { detail: null }));
+      message(status, error.message || 'Não foi possível calcular o frete.');
+    }
+  }
+
   async function createOrder(order) {
     const response = await fetch('/api/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfTokenValue },
       body: JSON.stringify(order)
     });
     const result = await response.json();
@@ -106,23 +196,69 @@
     return result;
   }
 
-  window.NexusStoreAccount = { client, ready, getUser: () => currentUser, loadDeliveryOptions, createOrder };
+  window.NexusStoreAccount = {
+    ready,
+    getUser: () => currentUser,
+    loadDeliveryOptions,
+    createOrder,
+    renderDeliveryOptions,
+    refreshShippingQuote,
+  };
+
+  document.addEventListener('input', (event) => {
+    if (!event.target.matches('#customerCEP, #shopCEP')) return;
+    const cep = normalizeCep(event.target.value);
+    if (window.NEXUS_SHIPPING_QUOTE?.cep === cep) return;
+    window.NEXUS_SHIPPING_QUOTE = null;
+    renderDeliveryOptions();
+    window.dispatchEvent(new CustomEvent('nexus:shipping-quote-updated', { detail: null }));
+  });
 
   if (!accountPage) {
     document.addEventListener('click', async (event) => {
-      const target = event.target.closest('#detailFavorite, .favorite-btn, #detailAddCart, .add-cart-btn, #detailBuyNow');
+      const quoteButton = event.target.closest('[data-calculate-shipping]');
+      if (quoteButton) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        await ready;
+        if (!currentUser) {
+          redirectForAuth('checkout', {});
+          return;
+        }
+        const formName = quoteButton.dataset.calculateShipping;
+        const cepId = formName === 'shop' ? 'shopCEP' : 'customerCEP';
+        quoteButton.disabled = true;
+        await refreshShippingQuote(document.getElementById(cepId)?.value, formName);
+        quoteButton.disabled = false;
+        return;
+      }
+
+      const target = event.target.closest(
+        '#detailFavorite, .favorite-btn, #detailAddCart, .add-cart-btn, #detailBuyNow, '
+        + '.payment-option, #deliveryOption, #shopDeliveryOption, #shopPaymentMethod, '
+        + '.qty-btn, .remove-cart-item, [data-cart-action], '
+        + '#detailSizes .size-option, #detailColors .size-option, #detailSizes input, #detailColors input, '
+        + 'input[name="size"], input[name="color"]'
+      );
       const checkout = event.target.closest('.cart-checkout, [data-confirm-order]');
       if (!target && !checkout) return;
-      if (!currentUser && target?.matches('#detailFavorite, .favorite-btn')) {
+      if (!currentUser) {
         event.preventDefault();
         event.stopImmediatePropagation();
         await ready;
         if (currentUser) {
-          (target || checkout).click();
+          (target || checkout)?.click();
           return;
         }
-        const intent = checkout ? 'checkout' : target?.id === 'detailBuyNow' ? 'buy-now'
-          : target?.id === 'detailFavorite' || target?.matches('.favorite-btn') ? 'favorite' : 'add-cart';
+        const intent = checkout || target?.matches(
+          '.payment-option, #deliveryOption, #shopDeliveryOption, #shopPaymentMethod, '
+          + '.qty-btn, .remove-cart-item, [data-cart-action]'
+        )
+          ? 'checkout'
+          : target?.matches('#detailSizes, #detailColors, #detailSizes *, #detailColors *, input[name="size"], input[name="color"]')
+            ? 'select-options'
+            : target?.id === 'detailBuyNow' ? 'buy-now'
+              : target?.id === 'detailFavorite' || target?.matches('.favorite-btn') ? 'favorite' : 'add-cart';
         const productName = target?.dataset.product || target?.dataset.favoriteProduct || target?.dataset.favorite
           || window.NEXUS_PRODUCTS?.[new URLSearchParams(window.location.search).get('id')]?.name || '';
         redirectForAuth(intent, { productName });
@@ -173,6 +309,13 @@
         message(status, 'Preencha rua, número e CEP para esta modalidade.');
         return;
       }
+      if (delivery.requires_address && (
+        !validCep(orderData.cep)
+        || window.NEXUS_SHIPPING_QUOTE?.cep !== normalizeCep(orderData.cep)
+      )) {
+        message(status, 'Calcule o frete pelo CEP informado antes de selecionar a entrega.');
+        return;
+      }
       if (!orderData.customerName) {
         message(status, 'Informe o nome que deve constar no pedido.');
         return;
@@ -190,14 +333,17 @@
         if (isDrawer) {
           const list = document.getElementById('shopCartList');
           const footer = document.getElementById('shopCartFooter');
-          list.textContent = `Pedido #${receipt.orderId} registrado. Aguardando confirmação do pagamento.`;
+          list.textContent = `Pedido #${receipt.orderId} registrado. Aguardando confirmação do pagamento. ${receipt.emailMessage}`;
+          appendTrackingLink(list, receipt.trackingToken);
           footer.innerHTML = '<button type="button" class="shop-continue-button">Continuar comprando</button>';
           document.getElementById('cartCount').textContent = '0';
         } else {
-          sessionStorage.setItem(
-            'nexus-order-notice',
-            `Pedido #${receipt.orderId} registrado e aguardando confirmação do pagamento.`
-          );
+          sessionStorage.setItem('nexus-order-notice', JSON.stringify({
+            message: `Pedido #${receipt.orderId} registrado e aguardando confirmação do pagamento. ${receipt.emailMessage}`,
+            emailSent: receipt.emailSent,
+            emailConfigured: receipt.emailConfigured,
+            trackingToken: receipt.trackingToken,
+          }));
           window.location.reload();
         }
       } catch (error) {
@@ -208,27 +354,22 @@
   }
 
   async function loadProfile(user) {
-    const { data, error } = await client.from('customer_profiles').select('*').eq('id', user.id).maybeSingle();
-    if (error) throw error;
     const form = document.getElementById('profilePanel');
     if (!form) return;
     form.elements.email.value = user.email || '';
-    form.elements.full_name.value = data?.full_name || user.user_metadata?.full_name || '';
-    form.elements.phone.value = data?.phone || '';
-    form.elements.birth_date.value = data?.birth_date || '';
-    form.elements.gender_identity.value = data?.gender_identity || '';
-    form.elements.sexual_orientation.value = data?.sexual_orientation || '';
-    document.getElementById('accountWelcome').textContent = `Olá, ${(data?.full_name || user.email || '').split(' ')[0]}`;
+    form.elements.full_name.value = user.name || '';
+    form.elements.phone.value = user.phone || '';
+    document.getElementById('accountWelcome').textContent = `Olá, ${(user.name || user.email || '').split(' ')[0]}`;
   }
 
   async function loadOrders(user) {
     const container = document.getElementById('ordersList');
     if (!container) return;
     container.innerHTML = '<p class="account-empty">Carregando seus pedidos...</p>';
-    const { data, error } = await client.from('store_orders')
-      .select('id,status,total,created_at,delivery_name,delivery_options(name,estimate),store_order_items(product_name,size,quantity,unit_price)')
-      .eq('user_id', user.id).order('created_at', { ascending: false });
-    if (error) {
+    let data;
+    try {
+      data = await customerRequest('/api/customer/orders');
+    } catch (error) {
       container.innerHTML = `<p class="account-empty">${escapeHtml(error.message)}</p>`;
       return;
     }
@@ -238,10 +379,10 @@
     }
     container.innerHTML = data.map((order) => {
       const date = new Date(order.created_at).toLocaleDateString('pt-BR');
-      const items = (order.store_order_items || []).map((item) =>
+      const items = (order.items || []).map((item) =>
         `${item.quantity}x ${escapeHtml(item.product_name)} (${escapeHtml(item.size)})`).join(', ');
-      const delivery = order.delivery_options?.name || order.delivery_name;
-      return `<article class="order-card"><div class="order-card-heading"><strong>Pedido #${escapeHtml(order.id.slice(0, 8).toUpperCase())}</strong><span>${date}</span></div><p>${items}</p><p>${escapeHtml(delivery)} · ${escapeHtml(order.status.replaceAll('_', ' '))}</p><p>Total ${formatMoney(order.total)}</p></article>`;
+      const trackingLink = `/acompanhar-pedido.html?token=${encodeURIComponent(order.tracking_token)}`;
+      return `<article class="order-card"><div class="order-card-heading"><strong>Pedido #${escapeHtml(order.id_venda)}</strong><span>${date}</span></div><p>${items}</p><p>${escapeHtml(order.delivery_name || 'Entrega')} · ${escapeHtml(order.statusLabel)}</p><p>Total ${formatMoney(order.total)}</p><a href="${trackingLink}">Acompanhar pedido</a></article>`;
     }).join('');
   }
 
@@ -283,30 +424,31 @@
       signupTab.setAttribute('aria-selected', String(signup));
       loginPanel.hidden = signup;
       signupPanel.hidden = !signup;
-      message(authMessage, client ? '' : configMissingMessage);
+      message(authMessage, '');
     };
     loginTab.addEventListener('click', () => switchMode(false));
     signupTab.addEventListener('click', () => switchMode(true));
     document.getElementById('profileTab').addEventListener('click', () => setAccountTab('profile'));
     document.getElementById('ordersTab').addEventListener('click', () => setAccountTab('orders'));
 
-    if (!client) {
-      message(authMessage, configMissingMessage);
-      authView.querySelectorAll('button[type="submit"]').forEach((button) => { button.disabled = true; });
-      loginPanel.addEventListener('submit', (event) => event.preventDefault());
-      signupPanel.addEventListener('submit', (event) => event.preventDefault());
-      return;
-    }
-
     loginPanel.addEventListener('submit', async (event) => {
       event.preventDefault();
       const values = new FormData(loginPanel);
-      const email = String(values.get('email')).trim();
+      const email = String(values.get('email')).trim().toLowerCase();
       if (!emailPattern.test(email)) return message(authMessage, 'Digite um e-mail no formato nome@dominio.com.');
-      const { data, error } = await client.auth.signInWithPassword({ email, password: values.get('password') });
-      if (error) return message(authMessage, error.message);
-      currentUser = data.user;
-      await showSignedIn(data.user);
+      const submit = loginPanel.querySelector('[type="submit"]');
+      submit.disabled = true;
+      try {
+        const data = await customerRequest('/api/customer/login', {
+          method: 'POST',
+          body: { email, password: values.get('password') },
+        });
+        await showSignedIn(data.customer);
+      } catch (error) {
+        message(authMessage, error.message);
+      } finally {
+        submit.disabled = false;
+      }
     });
     signupPanel.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -314,48 +456,80 @@
       const email = String(values.get('email')).trim();
       const password = String(values.get('password'));
       if (!emailPattern.test(email)) return message(authMessage, 'Digite um e-mail no formato nome@dominio.com.');
-      if (password.length < 6) return message(authMessage, 'A senha precisa ter pelo menos 6 caracteres.');
+      if (password.length < 12) return message(authMessage, 'A senha precisa ter pelo menos 12 caracteres.');
       if (password !== values.get('password_confirmation')) return message(authMessage, 'As senhas não são iguais.');
-      const { data, error } = await client.auth.signUp({
-        email, password,
-        options: { data: { full_name: values.get('full_name') } }
-      });
-      if (error) return message(authMessage, error.message);
-      if (!data.session) return message(authMessage, 'Cadastro iniciado. Confirme seu e-mail e depois entre na conta.', false);
-      currentUser = data.user;
-      await showSignedIn(data.user);
+      const submit = signupPanel.querySelector('[type="submit"]');
+      submit.disabled = true;
+      try {
+        const data = await customerRequest('/api/customer/signup', {
+          method: 'POST',
+          body: {
+            full_name: String(values.get('full_name')).trim(),
+            email: email.toLowerCase(),
+            password,
+          },
+        });
+        await showSignedIn(data.customer);
+      } catch (error) {
+        message(authMessage, error.message);
+      } finally {
+        submit.disabled = false;
+      }
     });
     document.getElementById('accountSignout').addEventListener('click', async () => {
-      clearActiveShoppingState();
-      currentUser = null;
-      await client.auth.signOut();
-      signedView.hidden = true;
-      authView.hidden = false;
-      message(authMessage, 'Você saiu da sua conta.', false);
+      try {
+        await customerRequest('/api/customer/logout', { method: 'POST', body: {} });
+        clearActiveShoppingState();
+        currentUser = null;
+        signedView.hidden = true;
+        authView.hidden = false;
+        updateAccountLinks();
+        message(authMessage, 'Você saiu da sua conta.', false);
+      } catch (error) {
+        message(profileMessage, error.message);
+      }
     });
     document.getElementById('profilePanel').addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!currentUser) return;
       const values = new FormData(event.currentTarget);
-      const profile = {
-        id: currentUser.id,
+      try {
+        currentUser = await customerRequest('/api/customer/profile', {
+          method: 'PUT',
+          body: {
         full_name: values.get('full_name').trim(),
         phone: values.get('phone').trim() || null,
-        birth_date: values.get('birth_date') || null,
-        gender_identity: values.get('gender_identity') || null,
-        sexual_orientation: values.get('sexual_orientation') || null,
-        updated_at: new Date().toISOString()
-      };
-      const { error } = await client.from('customer_profiles').upsert(profile);
-      if (error) return message(profileMessage, error.message);
-      await loadProfile(currentUser);
-      message(profileMessage, 'Seus dados foram atualizados.', false);
+          },
+        });
+        await loadProfile(currentUser);
+        message(profileMessage, 'Seus dados foram atualizados.', false);
+      } catch (error) {
+        message(profileMessage, error.message);
+      }
     });
   }
 
   async function showSignedIn(user) {
     currentUser = user;
     activateShoppingState(user);
+    ['customerName', 'shopName'].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) {
+        if (!field.value) field.value = user.name || '';
+        field.readOnly = true;
+      }
+    });
+    ['customerEmail', 'shopEmail'].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) {
+        field.value = user.email || '';
+        field.readOnly = true;
+      }
+    });
+    ['customerPhone', 'shopPhone'].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field && !field.value) field.value = user.phone || '';
+    });
     const authView = document.getElementById('accountAuthView');
     const signedView = document.getElementById('accountSignedView');
     if (authView && signedView) {
@@ -367,8 +541,7 @@
     if (accountPage) {
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get('redirect');
-      const pending = sessionStorage.getItem('nexus-pending-action');
-      if (redirect && pending) {
+      if (redirect) {
         const destination = new URL(redirect, window.location.href);
         if (destination.origin === window.location.origin) window.location.href = destination.href;
       }
@@ -377,62 +550,56 @@
 
   async function initialize() {
     if (accountPage) setupAccountPage();
-    const notice = sessionStorage.getItem('nexus-order-notice');
-    if (notice) {
+    const noticeValue = sessionStorage.getItem('nexus-order-notice');
+    if (noticeValue) {
       sessionStorage.removeItem('nexus-order-notice');
-      message(document.getElementById('checkoutStatus'), notice, false);
+      let notice;
+      try { notice = JSON.parse(noticeValue); } catch { notice = { message: noticeValue }; }
+      message(
+        document.getElementById('checkoutStatus'),
+        notice.message,
+        notice.emailSent === false && notice.emailConfigured !== false
+      );
+      appendTrackingLink(document.getElementById('checkoutStatus'), notice.trackingToken);
     }
-    if (client) {
-      try {
-        const { data } = await client.auth.getSession();
-        if (data.session?.user) await showSignedIn(data.session.user);
-        else updateAccountLinks();
-        client.auth.onAuthStateChange((_event, session) => {
-          const nextUser = session?.user || null;
-          if (currentUser?.id !== nextUser?.id) {
-            if (currentUser) persistShoppingState(currentUser);
-            if (nextUser) activateShoppingState(nextUser);
-            else clearActiveShoppingState();
-          }
-          currentUser = nextUser;
-          updateAccountLinks();
-        });
-      } catch (error) {
-        updateAccountLinks();
-        if (accountPage) message(document.getElementById('accountMessage'), error.message);
-      }
-    } else {
-      updateAccountLinks();
-    }
-
     try {
-      const options = await loadDeliveryOptions();
-      document.querySelectorAll('#deliveryOption').forEach((select) => {
-        const previous = select.value;
-        select.innerHTML = options.map((option) => `<option value="${escapeHtml(option.id)}">${escapeHtml(option.name)} · ${formatMoney(option.fee)} · ${escapeHtml(option.estimate)}</option>`).join('');
-        if (options.some((option) => option.id === previous)) select.value = previous;
-        select.addEventListener('change', () => {
-          const selected = options.find((option) => option.id === select.value);
-          const addressFields = document.getElementById('customerAddressFields');
-          if (addressFields) addressFields.hidden = !selected?.requires_address;
+      const session = await customerRequest('/api/customer/session');
+      if (session.customer) await showSignedIn(session.customer);
+      else {
+        currentUser = null;
+        updateAccountLinks();
+      }
+      if (currentUser) {
+        const options = await loadDeliveryOptions();
+        renderDeliveryOptions();
+        document.querySelectorAll('#deliveryOption, #shopDeliveryOption').forEach((select) => {
+          select.addEventListener('change', () => {
+            const selected = options.find((option) => option.id === select.value);
+            const addressFields = document.getElementById(
+              select.id === 'shopDeliveryOption' ? 'shopAddressFields' : 'customerAddressFields'
+            );
+            if (addressFields) addressFields.hidden = !selected?.requires_address;
+          });
+          select.dispatchEvent(new Event('change', { bubbles: true }));
         });
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-      });
+      } else {
+        window.NEXUS_DELIVERY_OPTIONS = [];
+        document.querySelectorAll('#deliveryOption, #shopDeliveryOption').forEach((select) => {
+          select.innerHTML = '<option value="">Entre para ver as opções de entrega</option>';
+          select.disabled = true;
+        });
+      }
     } catch (error) {
       window.NEXUS_DELIVERY_OPTIONS = [];
       window.NEXUS_DELIVERY_ERROR = error.message || 'Não foi possível carregar as opções de entrega.';
-      document.querySelectorAll('#deliveryOption').forEach((select) => {
+      document.querySelectorAll('#deliveryOption, #shopDeliveryOption').forEach((select) => {
         select.innerHTML = '<option value="">Entrega indisponível</option>';
         select.disabled = true;
       });
-      document.querySelectorAll('#deliveryStatus').forEach((element) => {
-        element.textContent = `Não foi possível carregar as entregas: ${error.message}`;
-      });
-      document.querySelectorAll('#shopDeliveryStatus').forEach((element) => {
-        element.textContent = `Não foi possível carregar as entregas: ${error.message}`;
-      });
+      if (accountPage) message(document.getElementById('accountMessage'), error.message);
+    } finally {
+      readyResolve();
     }
-    readyResolve();
     if (currentUser) replayPendingAction();
   }
 

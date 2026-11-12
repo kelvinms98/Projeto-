@@ -1,4 +1,48 @@
-# README do projeto: assistente de pesquisa com tool-calling
+# NEXUS — Inicialização dos serviços
+
+## Iniciar a loja e fazer compras
+
+Abra um PowerShell na pasta `Nexus` e mantenha o servidor em um terminal:
+
+```powershell
+.\run_web.bat
+```
+
+Acesse `http://localhost:8081`. Em outro terminal, para comprar pelo CLI:
+
+```powershell
+.\run_comprar.bat
+```
+
+O `Comprar.py` usa a API local `http://127.0.0.1:8081`. O servidor precisa estar aberto antes de iniciar a compra.
+
+## Outros serviços
+
+```powershell
+.\run_cep.bat       # buscador de CEP (mostra a URL local ao iniciar)
+.\run.bat           # assistente Gemini; requer GEMINI_API_KEY no .env
+.\comandos.bat      # menu com os atalhos disponíveis
+```
+
+Na primeira execução, os atalhos criam/validam `.venv` e instalam as dependências necessárias. Se quiser preparar o Python antes:
+
+```powershell
+.\preparar_python.bat
+```
+
+Para acessar o site por outro dispositivo na mesma rede, use o endereço IPv4 exibido pelo `run_web.bat` e a porta `8081`.
+
+Consulte [LOJA-NEXUS.md](./LOJA-NEXUS.md) para detalhes da loja, pedidos e banco de dados.
+
+---
+
+# Documentação do assistente de pesquisa
+
+## Loja NEXUS
+
+A loja agora usa Node.js e SQLite, sem depender do XAMPP para funcionar. Consulte
+[LOJA-NEXUS.md](./LOJA-NEXUS.md) para iniciar o servidor, usar `Comprar.py` e
+importar os dados existentes com segurança.
 
 Este projeto é um agente de pesquisa em Python que usa a API da Anthropic para responder perguntas com apoio de ferramentas externas. A ideia principal é simples:
 

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recibo interno #{{ pedido.id_venda }} | NEXUS</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #20211e; }
+    * { box-sizing: border-box; }
+    body { max-width: 760px; margin: 30px auto; padding: 24px; }
+    header, .receipt-total, .receipt-meta { display: flex; justify-content: space-between; gap: 20px; }
+    header { align-items: start; border-bottom: 2px solid #222; padding-bottom: 16px; }
+    h1 { margin: 0; letter-spacing: .12em; }
+    h2 { margin: 4px 0 0; font-size: 1.15rem; }
+    p { line-height: 1.5; }
+    .notice { margin: 20px 0; padding: 12px; border: 1px solid #b43a2b; color: #8a241a; font-weight: 700; text-align: center; }
+    .receipt-meta { justify-content: start; flex-wrap: wrap; margin: 20px 0; }
+    .receipt-meta div { min-width: 180px; }
+    small { display: block; margin-bottom: 4px; color: #6a6a64; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: left; }
+    .receipt-total { justify-content: end; gap: 45px; margin-top: 18px; font-size: 1.15rem; font-weight: 700; }
+    .print-button { margin: 24px 0; padding: 11px 18px; border: 0; background: #171717; color: white; font: inherit; cursor: pointer; }
+    @media print { body { margin: 0 auto; padding: 0; } .print-button { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>NEXUS</h1><h2>Recibo de venda</h2></div>
+    <div><strong>Pedido #{{ pedido.id_venda }}</strong><br />Emitido em {{ data_emissao }}</div>
+  </header>
+  <p class="notice">RECIBO INTERNO — NÃO É NOTA FISCAL E NÃO SUBSTITUI DOCUMENTO FISCAL.</p>
+  <section class="receipt-meta">
+    <div><small>Cliente</small><strong>{{ pedido.customer_name }}</strong></div>
+    <div><small>E-mail</small><strong>{{ pedido.customer_email }}</strong></div>
+    <div><small>Pagamento</small><strong>{{ pedido.payment_label }}</strong></div>
+    <div><small>Status</small><strong>{{ pedido.status_label }}</strong></div>
+  </section>
+  <table>
+    <thead><tr><th>Produto</th><th>Tamanho</th><th>Quantidade</th><th>Unitário</th><th>Total</th></tr></thead>
+    <tbody>{% for item in pedido.items %}
+      <tr>
+        <td>{{ item.product_name }}</td><td>{{ item.size }}</td><td>{{ item.quantity }}</td>
+        <td>R$ {{ item.unit_price|money }}</td>
+        <td>R$ {{ (item.unit_price * item.quantity)|money }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table>
+  <p>Subtotal: R$ {{ pedido.subtotal|money }}<br />
+    Desconto: R$ {{ pedido.discount_amount|money }}<br />
+    Frete: R$ {{ pedido.delivery_fee|money }}</p>
+  <div class="receipt-total"><span>Total pago</span><span>R$ {{ pedido.total|money }}</span></div>
+  <p>Entrega: {{ pedido.delivery_name or "Retirada na loja" }}{% if pedido.delivery_cep %} · CEP {{ pedido.delivery_cep }}{% endif %}</p>
+  <button class="print-button" type="button" onclick="window.print()">Imprimir recibo</button>
+</body>
+</html>

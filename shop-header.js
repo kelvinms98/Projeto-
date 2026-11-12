@@ -70,11 +70,13 @@ function renderCart() {
     <div><span id="shopDeliverySummary">Entrega</span><strong id="shopDeliveryFee">Selecione</strong></div>
     <div class="shop-total"><span>Total</span><strong id="shopCartTotal">${currency.format(subtotal)}</strong></div>
     <div class="shop-checkout-fields">
-      <label>Modalidade de entrega<select id="shopDeliveryOption"><option value="">Carregando opções...</option></select></label>
+      <label>CEP de destino<input id="shopCEP" autocomplete="postal-code" inputmode="numeric" /></label>
+      <button type="button" class="shop-quote-button" data-calculate-shipping="shop">Calcular frete</button>
       <p class="shop-delivery-status" id="shopDeliveryStatus" role="status"></p>
+      <label>Modalidade de entrega<select id="shopDeliveryOption"><option value="">Carregando opções...</option></select></label>
       <div class="shop-address-fields" id="shopAddressFields">
         <label>Rua<input id="shopStreet" autocomplete="street-address" /></label>
-        <div class="shop-address-row"><label>Número<input id="shopNumber" /></label><label>CEP<input id="shopCEP" autocomplete="postal-code" /></label></div>
+        <div class="shop-address-row"><label>Número<input id="shopNumber" /></label></div>
         <label>Complemento<input id="shopComplement" /></label>
       </div>
       <label>Nome para o pedido<input id="shopName" autocomplete="name" /></label>
@@ -90,7 +92,9 @@ function renderCart() {
   const deliverySelect = document.getElementById('shopDeliveryOption');
   const updateTotals = () => {
     const selected = (window.NEXUS_DELIVERY_OPTIONS || []).find((option) => option.id === deliverySelect.value);
-    const fee = Number(selected?.fee || 0);
+    const quote = window.NEXUS_SHIPPING_QUOTE;
+    const validQuote = quote?.cep === String(document.getElementById('shopCEP')?.value || '').replace(/\D/g, '');
+    const fee = Number(selected?.requires_address && validQuote ? quote.fee : selected?.fee || 0);
     const pix = document.getElementById('shopPaymentMethod').value === 'pix';
     const discount = pix ? subtotal * 0.1 : 0;
     document.getElementById('shopCartDiscount').textContent = `−${currency.format(discount)}`;
@@ -101,10 +105,12 @@ function renderCart() {
   };
   deliverySelect.addEventListener('change', updateTotals);
   document.getElementById('shopPaymentMethod').addEventListener('change', updateTotals);
+  window.addEventListener('nexus:shipping-quote-updated', updateTotals);
   window.NexusStoreAccount?.ready.then(() => {
     const options = window.NEXUS_DELIVERY_OPTIONS || [];
     deliverySelect.innerHTML = options.map((option) =>
       `<option value="${escapeShopText(option.id)}">${escapeShopText(option.name)} · ${currency.format(option.fee)} · ${escapeShopText(option.estimate)}</option>`).join('');
+    window.NexusStoreAccount?.renderDeliveryOptions();
     deliverySelect.disabled = options.length === 0;
     if (!options.length) {
       const status = document.getElementById('shopDeliveryStatus');
@@ -165,7 +171,7 @@ window.NEXUS_PRODUCTS_READY
     renderFavorites();
   })
   .catch((error) => {
-    console.error('Falha ao carregar os produtos do MySQL:', error);
+    console.error('Falha ao carregar os produtos do servidor local:', error);
   });
 
 themeToggle.addEventListener('click', () => setTheme(document.body.classList.contains('dark-theme') ? 'light' : 'dark'));

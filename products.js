@@ -60,7 +60,7 @@
             description: 'Produto cadastrado no estoque. Escolha uma cor e um tamanho disponíveis.',
             material: 'Não informado no cadastro',
             fit: 'Não informado no cadastro',
-            images: [imageFor(category)],
+            images: [row.imageUrl || imageFor(category)],
             variants: [],
             measurements: [],
             reviews: [],

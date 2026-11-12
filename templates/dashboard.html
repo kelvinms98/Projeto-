@@ -26,11 +26,15 @@
     .muted { color: #77766f; font-size: .85rem; line-height: 1.5; }
     .status-banner, .notice { margin: 0 0 18px; padding: 13px 15px; border: 1px solid #e9c8a0; background: #fff6e9; color: #70441c; font-size: .84rem; line-height: 1.5; }
     .notice.success { border-color: #b9d8c2; background: #eff8f1; color: #285f39; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
     .stat, .panel { border: 1px solid #e2e0d9; background: #fff; }
     .stat { padding: 16px; }
     .stat span { display: block; color: #77766f; font-size: .75rem; }
     .stat strong { display: block; margin-top: 8px; font-size: 1.45rem; }
+    .report-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 15px 0 22px; }
+    .report-card { padding: 13px; border: 1px solid #e8e6df; background: #fdfcf9; }
+    .report-card span { display: block; color: #77766f; font-size: .74rem; }
+    .report-card strong { display: block; margin-top: 7px; font-size: 1.25rem; }
     .panel { margin-top: 16px; padding: clamp(16px, 2vw, 24px); }
     .panel-heading { display: flex; align-items: start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
     h2 { margin-bottom: 5px; font-size: 1.1rem; }
@@ -51,6 +55,14 @@
     .purchase-form { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(110px, .7fr) minmax(180px, 1.3fr) auto; align-items: end; gap: 12px; }
     .purchase-form label { display: grid; gap: 6px; color: #55554f; font-size: .76rem; font-weight: 700; }
     .purchase-form input, .purchase-form select { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #d8d6cf; border-radius: 3px; background: #fff; color: #20211e; font: inherit; font-size: .8rem; }
+    .employee-form { display: grid; min-width: 230px; gap: 8px; }
+    .employee-form label { display: grid; gap: 4px; color: #55554f; font-size: .72rem; }
+    .employee-form input, .employee-form select { width: 100%; min-height: 36px; padding: 7px; border: 1px solid #d8d6cf; border-radius: 3px; background: #fff; color: #20211e; font: inherit; font-size: .76rem; }
+    .photo-chart { height: 22px; overflow: hidden; margin: 12px 0 20px; border: 1px solid #e2e0d9; background: #f1eee7; }
+    .photo-chart-filled { display: block; height: 100%; background: #397c51; }
+    .order-status-form { display: grid; min-width: 170px; gap: 7px; }
+    .order-status-form select { min-height: 36px; padding: 7px; border: 1px solid #d8d6cf; border-radius: 3px; background: #fff; font: inherit; font-size: .75rem; }
+    .order-status-form button { min-height: 36px; padding: 7px 10px; border: 0; border-radius: 3px; background: #171717; color: #fff; font: inherit; font-size: .75rem; font-weight: 800; cursor: pointer; }
     .primary { min-height: 42px; padding: 9px 15px; border: 0; border-radius: 3px; background: #171717; color: #fff; font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer; }
     .primary:hover:not(:disabled) { background: #e64d1a; }
     button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
@@ -58,6 +70,7 @@
     .section-gap { margin-top: 18px; }
     @media (max-width: 850px) {
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .supplier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .purchase-form { grid-template-columns: 1fr 1fr; }
       .purchase-form label:first-child, .purchase-form label:nth-child(3) { grid-column: 1 / -1; }
@@ -81,14 +94,16 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('dashboard') }}">
+    <a class="brand" href="/dashboard">
       <span class="brand-mark">N</span>
       <span><small>Área interna</small><strong>NEXUS</strong></span>
     </a>
     <div class="top-actions">
-      <a href="{{ url_for('index') }}">Abrir loja</a>
+      <a href="/">Abrir loja</a>
+      {% if papel == "owner" %}<a href="#equipe">Equipe</a>{% endif %}
+      <a href="#caixa">Caixa</a>
       <span>{{ nome }}</span>
-      <form action="{{ url_for('logout') }}" method="post">
+      <form action="/logout" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button class="logout" type="submit">Sair</button>
       </form>
@@ -97,37 +112,181 @@
 
   <main>
     <div class="heading">
-      <div><span class="eyebrow">Painel de operação</span><h1>Olá, {{ nome }}</h1><p class="muted">Produtos, equipe e suprimentos da loja em um só lugar.</p></div>
-      <span class="badge {% if modo_recuperacao %}warning{% endif %}">{% if modo_recuperacao %}Banco em recuperação — somente leitura{% else %}Banco conectado{% endif %}</span>
+      <div><span class="eyebrow">Painel de operação</span><h1>Olá, {{ nome }}</h1><p class="muted">Pedidos de clientes, estoque, equipe e suprimentos.</p></div>
+      <span class="badge">Banco SQLite local conectado</span>
     </div>
 
-    {% if modo_recuperacao %}
-      <div class="status-banner" role="status">O MariaDB está em modo de recuperação. Pedidos de clientes, pedidos de materiais e atualizações de estoque estão bloqueados para preservar os dados. Não desative o modo de recuperação antes de corrigir a falha InnoDB.</div>
-    {% endif %}
-    {% if esquema_compras_ausente %}
-      <div class="status-banner" role="status">O banco legado ainda não tem as tabelas de fornecedores e compras. A instalação está descrita em <code>bancodedados.sql</code> e só deve ser feita após a recuperação normal do InnoDB.</div>
-    {% endif %}
     {% if aviso %}<div class="notice {{ aviso.kind }}" role="status">{{ aviso.message }}</div>{% endif %}
 
     <section class="stats" aria-label="Resumo da loja">
       <article class="stat"><span>Funcionários cadastrados</span><strong>{{ funcionarios|length }}</strong></article>
       <article class="stat"><span>Variantes de produtos</span><strong>{{ produtos|length }}</strong></article>
-      <article class="stat"><span>Unidades de produtos</span><strong>{{ produtos|sum(attribute='estoque') }}</strong></article>
-      <article class="stat"><span>Fornecedores ativos</span><strong>{{ fornecedores|length if not esquema_compras_ausente else fornecedores_demo|length }}</strong></article>
+      <article class="stat"><span>Estoque disponível</span><strong>{{ unidades_estoque }}</strong></article>
+      <article class="stat"><span>Fornecedores ativos</span><strong>{{ fornecedores|length }}</strong></article>
+      <article class="stat"><span>Pedidos aguardando pagamento</span><strong>{{ pedidos_aguardando }}</strong></article>
+      <article class="stat"><span>Peças reservadas</span><strong>{{ unidades_reservadas }}</strong></article>
     </section>
 
+    {% if papel in ["owner", "manager", "cashier"] %}
+    <section class="panel" id="relatorio-vendas">
+      <div class="panel-heading"><div><h2>Relatório de vendas · últimos 30 dias</h2><p class="muted">Faturamento considera pedidos com pagamento confirmado; pedidos aguardando e cancelados aparecem separados.</p></div></div>
+      <div class="report-grid">
+        <article class="report-card"><span>Faturamento confirmado</span><strong>R$ {{ relatorio_vendas.faturamento }}</strong></article>
+        <article class="report-card"><span>Pedidos confirmados</span><strong>{{ relatorio_vendas.pedidos }}</strong></article>
+        <article class="report-card"><span>Aguardando pagamento</span><strong>{{ relatorio_vendas.aguardando }}</strong></article>
+        <article class="report-card"><span>Cancelados</span><strong>{{ relatorio_vendas.cancelados }}</strong></article>
+      </div>
+      <h3>Resumo diário · últimos 7 dias</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Dia</th><th>Pedidos confirmados</th><th>Faturamento</th></tr></thead>
+        <tbody>{% for dia in relatorio_vendas.diario %}
+          <tr><td>{{ dia.label }}</td><td>{{ dia.orders }}</td><td>R$ {{ dia.revenue }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+    {% endif %}
+
+    {% if papel in ["owner", "manager", "cashier"] %}
+    <section class="panel" id="pedidos">
+      <div class="panel-heading"><div><h2>Pedidos de clientes</h2><p class="muted">Ao registrar um pedido, as peças saem do estoque disponível e ficam reservadas até a conclusão ou cancelamento.</p></div></div>
+      {% if pedidos_venda %}
+        <div class="table-wrap"><table>
+          <thead><tr><th>Pedido</th><th>Cliente</th><th>Peças reservadas</th><th>Entrega</th><th>Pagamento e total</th><th>Status</th><th>Atualizar</th></tr></thead>
+          <tbody>{% for pedido in pedidos_venda %}
+            <tr>
+              <td>#{{ pedido.id_venda }}<br /><span class="muted">{{ pedido.created_at }}</span></td>
+              <td class="wrap">{{ pedido.customer_name }}<br /><a href="mailto:{{ pedido.customer_email }}">{{ pedido.customer_email }}</a>{% if pedido.customer_phone %}<br />{{ pedido.customer_phone }}{% endif %}</td>
+              <td class="wrap">{% for item in pedido.items %}{{ item.quantity }}x {{ item.product_name }} · {{ item.size }}{% if not loop.last %}<br />{% endif %}{% endfor %}</td>
+              <td class="wrap">{{ pedido.delivery_name or "Entrega" }}{% if pedido.delivery_street %}<br />{{ pedido.delivery_street }}, {{ pedido.delivery_number }}{% if pedido.delivery_complement %} · {{ pedido.delivery_complement }}{% endif %}<br />CEP {{ pedido.delivery_cep }}{% endif %}</td>
+              <td class="wrap">{{ pedido.payment_label }}<br /><strong>R$ {{ pedido.total|money }}</strong><br /><span class="muted">Frete R$ {{ pedido.delivery_fee|money }}</span></td>
+              <td><span class="badge {% if pedido.status == 'awaiting_payment' %}warning{% endif %}">{{ pedido.status_label }}</span><br /><a href="/acompanhar-pedido.html?token={{ pedido.tracking_token }}" target="_blank" rel="noopener">Abrir acompanhamento</a>{% if pedido.status in ["paid", "preparing", "shipped", "delivered"] %}<br /><a href="/dashboard/orders/{{ pedido.id_venda }}/receipt" target="_blank" rel="noopener">Imprimir recibo interno</a>{% endif %}</td>
+              <td>
+                {% if pedido.next_statuses %}
+                  <form class="order-status-form" action="/dashboard/orders/{{ pedido.id_venda }}/status" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                    <select name="status" aria-label="Próximo status do pedido {{ pedido.id_venda }}" required>
+                      {% for status in pedido.next_statuses %}<option value="{{ status.value }}">{{ status.label }}</option>{% endfor %}
+                    </select>
+                    <button type="submit">Atualizar pedido</button>
+                  </form>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}<p class="empty">Nenhum pedido de cliente registrado ainda.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if papel in ["owner", "manager", "cashier"] %}
+    <section class="panel" id="caixa">
+      <div class="panel-heading">
+        <div><h2>Caixa e entradas confirmadas</h2><p class="muted">Pedidos entram no relatório após confirmar pagamento. O fechamento do caixa confere apenas o dinheiro físico.</p></div>
+      </div>
+      <div class="report-grid">
+        <article class="report-card"><span>Entradas confirmadas em pedidos</span><strong>R$ {{ total_entradas_confirmadas|money }}</strong></article>
+        <article class="report-card"><span>Pedidos pagos registrados</span><strong>{{ total_pedidos_pagamento_confirmado }}</strong></article>
+        {% if caixa_aberto %}<article class="report-card"><span>Dinheiro esperado no caixa aberto</span><strong>R$ {{ (caixa_aberto.opening_amount + caixa_aberto.cash_delta)|money }}</strong></article>{% endif %}
+      </div>
+      {% if caixa_aberto %}
+        <p class="muted">Caixa #{{ caixa_aberto.id }} aberto por {{ caixa_aberto.opened_by_name }} em {{ caixa_aberto.opened_at }} · saldo inicial R$ {{ caixa_aberto.opening_amount|money }}.</p>
+        <h3 class="section-gap">Lançar entrada, venda ou retirada</h3>
+        <form class="purchase-form" action="/dashboard/cash/entries" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <label>Tipo
+            <select name="kind" required><option value="addition">Entrada manual</option><option value="sale">Venda manual</option><option value="withdrawal">Retirada</option></select>
+          </label>
+          <label>Forma
+            <select name="payment_method" required><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+          </label>
+          <label>Valor (R$)<input type="number" name="amount" min="0.01" max="10000000" step="0.01" required /></label>
+          <label>Descrição<input type="text" name="note" maxlength="200" /></label>
+          <button class="primary" type="submit">Registrar movimento</button>
+        </form>
+        {% if caixa_movimentos %}
+          <h3 class="section-gap">Movimentos do caixa aberto</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tipo</th><th>Forma</th><th>Valor</th><th>Descrição</th><th>Responsável</th><th>Data</th></tr></thead>
+            <tbody>{% for movimento in caixa_movimentos %}
+              <tr><td>{{ movimento.kind }}</td><td>{{ movimento.payment_method }}</td><td>R$ {{ movimento.amount|money }}</td><td>{{ movimento.note or "—" }}</td><td>{{ movimento.employee_name }}</td><td>{{ movimento.created_at }}</td></tr>
+            {% endfor %}</tbody>
+          </table></div>
+        {% endif %}
+        <h3 class="section-gap">Fechar caixa</h3>
+        <form class="purchase-form" action="/dashboard/cash/close" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <label>Valor contado (R$)<input type="number" name="closing_amount" min="0" max="10000000" step="0.01" required /></label>
+          <button class="primary" type="submit">Fechar e comparar</button>
+        </form>
+      {% else %}
+        <form class="purchase-form" action="/dashboard/cash/open" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <label>Saldo inicial em dinheiro (R$)<input type="number" name="opening_amount" min="0" max="10000000" step="0.01" value="0" required /></label>
+          <button class="primary" type="submit">Abrir caixa</button>
+        </form>
+      {% endif %}
+      {% if entradas_confirmadas %}
+        <h3 class="section-gap">Pedidos com pagamento confirmado</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Pedido</th><th>Cliente</th><th>Pagamento</th><th>Valor</th><th>Confirmado por</th><th>Recibo</th></tr></thead>
+          <tbody>{% for entrada in entradas_confirmadas %}
+            <tr><td>#{{ entrada.id_venda }}</td><td>{{ entrada.customer_name }}</td><td>{{ entrada.payment_method }}</td><td>R$ {{ entrada.total|money }}</td><td>{{ entrada.confirmed_by or "Histórico importado" }}</td><td><a href="/dashboard/orders/{{ entrada.id_venda }}/receipt" target="_blank" rel="noopener">Abrir recibo</a></td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}<p class="empty">Nenhuma entrada de pedido confirmada até agora.</p>{% endif %}
+      {% if caixa_historico %}
+        <h3 class="section-gap">Fechamentos anteriores</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Caixa</th><th>Responsável</th><th>Abertura</th><th>Saldo inicial</th><th>Contado</th><th>Esperado</th><th>Status</th></tr></thead>
+          <tbody>{% for caixa in caixa_historico %}
+            <tr><td>#{{ caixa.id }}</td><td>{{ caixa.opened_by_name }}</td><td>{{ caixa.opened_at }}</td><td>R$ {{ caixa.opening_amount|money }}</td><td>{% if caixa.closing_amount is not none %}R$ {{ caixa.closing_amount|money }}{% else %}—{% endif %}</td><td>{% if caixa.expected_amount is not none %}R$ {{ caixa.expected_amount|money }}{% else %}—{% endif %}</td><td>{{ caixa.status }}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if papel in ["owner", "manager"] %}
+    <section class="panel" id="fotos">
+      <div class="panel-heading"><div><h2>Fotos do catálogo</h2><p class="muted">Resumo por produto (sem repetir as variantes de tamanho/cor). As imagens exibidas como ilustração não contam como foto cadastrada.</p></div></div>
+      <div class="report-grid">
+        <article class="report-card"><span>Produtos cadastrados com foto</span><strong>{{ produtos_com_foto }}</strong></article>
+        <article class="report-card"><span>Produtos sem foto cadastrada</span><strong>{{ produtos_sem_foto|length }}</strong></article>
+      </div>
+      <div class="photo-chart" role="img" aria-label="Produtos com foto cadastrada: {{ produtos_com_foto }}; sem foto: {{ produtos_sem_foto|length }}">
+        <span class="photo-chart-filled" style="width: {{ percentual_fotos }}%"></span>
+      </div>
+      {% if produtos_sem_foto %}
+        <div class="table-wrap"><table>
+          <thead><tr><th>Produto sem foto</th><th>Cadastrar caminho local ou URL HTTPS da imagem</th></tr></thead>
+          <tbody>{% for nome_produto in produtos_sem_foto %}
+            <tr><td>{{ nome_produto }}</td><td>
+              <form class="purchase-form" action="/dashboard/products/media" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <input type="hidden" name="product_name" value="{{ nome_produto }}" />
+                <label>Imagem<input type="text" name="image_url" maxlength="500" placeholder="ex.: imagens/produto.jpg ou https://..." required /></label>
+                <button class="primary" type="submit">Salvar foto</button>
+              </form>
+            </td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}<p class="notice success">Todos os produtos têm uma foto cadastrada.</p>{% endif %}
+    </section>
+    {% endif %}
+
     <section class="panel">
-      <div class="panel-heading"><div><h2>Estoque de produtos</h2><p class="muted">Variações disponíveis para venda.</p></div></div>
+      <div class="panel-heading"><div><h2>Estoque de produtos</h2><p class="muted">Variações disponíveis para venda; as quantidades reservadas nos pedidos já foram descontadas.</p></div></div>
       {% if produtos %}
         <div class="table-wrap"><table>
           <thead><tr><th>Produto</th><th>Cor</th><th>Tamanho</th><th>Preço</th><th>Estoque</th></tr></thead>
           <tbody>{% for produto in produtos %}
-            <tr><td>{{ produto.nome }}</td><td>{{ produto.cor or "—" }}</td><td>{{ produto.tamanho or "—" }}</td><td>{{ "R$ %.2f"|format(produto.preco or 0) }}</td><td><span class="badge {% if produto.estoque < 5 %}warning{% endif %}">{{ produto.estoque }}</span></td></tr>
+            <tr><td>{{ produto.nome }}</td><td>{{ produto.cor or "—" }}</td><td>{{ produto.tamanho or "—" }}</td><td>R$ {{ produto.preco|money }}</td><td><span class="badge {% if produto.estoque < 5 %}warning{% endif %}">{{ produto.estoque }}</span></td></tr>
           {% endfor %}</tbody>
         </table></div>
       {% else %}<p class="empty">Nenhum produto cadastrado.</p>{% endif %}
     </section>
 
+    {% if papel in ["owner", "manager"] %}
     <section class="panel">
       <div class="panel-heading"><div><h2>Fornecedores fictícios</h2><p class="muted">Dados de demonstração; contatos <code>.example</code> não são reais.</p></div><span class="badge">DEMO</span></div>
       {% if fornecedores %}
@@ -148,29 +307,27 @@
         <div class="table-wrap"><table>
           <thead><tr><th>Material</th><th>Categoria</th><th>Fornecedor</th><th>Unidade</th><th>Estoque</th><th>Mínimo</th><th>Custo ref.</th></tr></thead>
           <tbody>{% for material in materiais %}
-            <tr><td>{{ material.name }}<br /><span class="muted">{{ material.sku }}</span></td><td>{{ material.category }}</td><td>{{ material.supplier_name }}</td><td>{{ material.unit }}</td><td><span class="badge {% if material.current_stock <= material.minimum_stock %}warning{% endif %}">{{ material.current_stock }}</span></td><td>{{ material.minimum_stock }}</td><td>{{ "R$ %.2f"|format(material.unit_cost) }}</td></tr>
+            <tr><td>{{ material.name }}<br /><span class="muted">{{ material.sku }}</span></td><td>{{ material.category }}</td><td>{{ material.supplier_name }}</td><td>{{ material.unit }}</td><td><span class="badge {% if material.current_stock <= material.minimum_stock %}warning{% endif %}">{{ material.current_stock }}</span></td><td>{{ material.minimum_stock }}</td><td>R$ {{ material.unit_cost|money }}</td></tr>
           {% endfor %}</tbody>
         </table></div>
-      {% elif esquema_compras_ausente %}
-        <p class="empty">Os materiais de demonstração serão carregados quando as tabelas de compras forem instaladas após a recuperação do banco.</p>
       {% else %}<p class="empty">Não há materiais ativos cadastrados.</p>{% endif %}
 
       <h3 class="section-gap">Registrar pedido interno de material</h3>
-      <form class="purchase-form" action="{{ url_for('create_supply_purchase') }}" method="post">
+      <form class="purchase-form" action="/dashboard/purchases" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <label>Material e fornecedor
-          <select name="supply_id" required {% if modo_recuperacao or esquema_compras_ausente or not materiais %}disabled{% endif %}>
+          <select name="supply_id" required {% if not materiais %}disabled{% endif %}>
             <option value="">Selecione um material</option>
-            {% for material in materiais %}<option value="{{ material.id }}">{{ material.sku }} · {{ material.name }} — {{ material.supplier_name }} · R$ {{ "%.2f"|format(material.unit_cost) }}/{{ material.unit }}</option>{% endfor %}
+            {% for material in materiais %}<option value="{{ material.id }}">{{ material.sku }} · {{ material.name }} — {{ material.supplier_name }} · R$ {{ material.unit_cost|money }}/{{ material.unit }}</option>{% endfor %}
           </select>
         </label>
         <label>Quantidade
-          <input type="number" name="quantity" min="1" max="10000" step="1" value="1" required {% if modo_recuperacao or esquema_compras_ausente or not materiais %}disabled{% endif %} />
+          <input type="number" name="quantity" min="1" max="10000" step="1" value="1" required {% if not materiais %}disabled{% endif %} />
         </label>
         <label>Observação
-          <input type="text" name="notes" maxlength="255" placeholder="Ex.: reposição de embalagens" {% if modo_recuperacao or esquema_compras_ausente or not materiais %}disabled{% endif %} />
+          <input type="text" name="notes" maxlength="255" placeholder="Ex.: reposição de embalagens" {% if not materiais %}disabled{% endif %} />
         </label>
-        <button class="primary" type="submit" {% if modo_recuperacao or esquema_compras_ausente or not materiais %}disabled{% endif %}>Criar solicitação</button>
+        <button class="primary" type="submit" {% if not materiais %}disabled{% endif %}>Criar solicitação</button>
       </form>
       <p class="demo-note">Ao confirmar o recebimento abaixo, o estoque de suprimentos será atualizado. Nenhuma solicitação é enviada a terceiros.</p>
     </section>
@@ -181,25 +338,72 @@
         <div class="table-wrap"><table>
           <thead><tr><th>Pedido</th><th>Fornecedor</th><th>Itens</th><th>Total de referência</th><th>Status</th><th>Ação</th></tr></thead>
           <tbody>{% for pedido in pedidos_compra %}
-            <tr><td>#{{ pedido.id }}</td><td>{{ pedido.supplier_name }}</td><td>{{ pedido.item_count }}</td><td>{{ "R$ %.2f"|format(pedido.total) }}</td><td><span class="badge {% if pedido.status == 'requested' %}warning{% endif %}">{{ "Aguardando recebimento" if pedido.status == "requested" else "Recebido" if pedido.status == "received" else pedido.status }}</span></td><td>
+            <tr><td>#{{ pedido.id }}</td><td>{{ pedido.supplier_name }}</td><td>{{ pedido.item_count }}</td><td>R$ {{ pedido.total|money }}</td><td><span class="badge {% if pedido.status == 'requested' %}warning{% endif %}">{{ pedido.status_label }}</span></td><td>
               {% if pedido.status == "requested" %}
-                <form action="{{ url_for('receive_supply_purchase', order_id=pedido.id) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><button class="logout" type="submit" {% if modo_recuperacao %}disabled{% endif %}>Confirmar recebimento</button></form>
+                <form action="/dashboard/purchases/{{ pedido.id }}/receive" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><button class="logout" type="submit">Confirmar recebimento</button></form>
               {% else %}—{% endif %}
             </td></tr>
           {% endfor %}</tbody>
         </table></div>
       {% else %}<p class="empty">Nenhum pedido interno registrado.</p>{% endif %}
     </section>
+    {% endif %}
 
-    <section class="panel">
-      <div class="panel-heading"><div><h2>Equipe</h2><p class="muted">Funcionários cadastrados no banco.</p></div></div>
+    {% if papel == "owner" %}
+    <section class="panel" id="equipe">
+      <div class="panel-heading"><div><h2>Equipe e acessos</h2><p class="muted">Crie contas, escolha uma função, atualize salários e bloqueie ou libere acessos. Alterações ficam registradas no histórico administrativo.</p></div></div>
+      <h3>Novo funcionário</h3>
+      <form class="purchase-form" action="/dashboard/employees" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <label>Nome<input type="text" name="nome" maxlength="120" required /></label>
+        <label>Usuário<input type="text" name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" required /></label>
+        <label>E-mail<input type="email" name="email" maxlength="254" required /></label>
+        <label>Cargo<input type="text" name="cargo" maxlength="80" required /></label>
+        <label>Função
+          <select name="role" required><option value="staff">Funcionário</option><option value="cashier">Caixa</option><option value="manager">Gerente</option></select>
+        </label>
+        <label>Salário mensal (R$)<input type="number" name="salary" min="0" max="10000000" step="0.01" value="0" required /></label>
+        <label>Senha inicial (mín. 12 caracteres)<input type="password" name="senha" minlength="12" maxlength="256" autocomplete="new-password" required /></label>
+        <button class="primary" type="submit">Criar acesso</button>
+      </form>
       {% if funcionarios %}
         <div class="table-wrap"><table>
-          <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th></tr></thead>
-          <tbody>{% for funcionario in funcionarios %}<tr><td>{{ funcionario.nome }}</td><td>{{ funcionario.email }}</td><td>{{ funcionario.cargo }}</td></tr>{% endfor %}</tbody>
+          <thead><tr><th>Nome / usuário</th><th>E-mail</th><th>Cargo</th><th>Permissões e salário</th></tr></thead>
+          <tbody>{% for funcionario in funcionarios %}<tr>
+            <td>{{ funcionario.nome }}<br /><span class="muted">@{{ funcionario.username }}</span></td>
+            <td>{{ funcionario.email }}</td><td>{{ funcionario.cargo }}</td>
+            <td>
+              <form class="employee-form" action="/dashboard/employees/{{ funcionario.id_funcionario }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+                <label>Função<select name="role" required>
+                  <option value="owner" {% if funcionario.role == "owner" %}selected{% endif %}>Proprietário</option>
+                  <option value="manager" {% if funcionario.role == "manager" %}selected{% endif %}>Gerente</option>
+                  <option value="cashier" {% if funcionario.role == "cashier" %}selected{% endif %}>Caixa</option>
+                  <option value="staff" {% if funcionario.role == "staff" %}selected{% endif %}>Funcionário</option>
+                </select></label>
+                <label>Acesso<select name="access_status" required>
+                  <option value="active" {% if funcionario.access_status == "active" %}selected{% endif %}>Liberado</option>
+                  <option value="blocked" {% if funcionario.access_status == "blocked" %}selected{% endif %}>Bloqueado</option>
+                </select></label>
+                <label>Salário mensal (R$)<input type="number" name="salary" min="0" max="10000000" step="0.01" value="{{ funcionario.salary|money }}" required /></label>
+                <label>Redefinir senha (opcional)<input type="password" name="senha" minlength="12" maxlength="256" autocomplete="new-password" /></label>
+                <button class="primary" type="submit">Salvar alterações</button>
+              </form>
+            </td>
+          </tr>{% endfor %}</tbody>
         </table></div>
       {% else %}<p class="empty">Nenhum funcionário cadastrado.</p>{% endif %}
+      {% if auditoria_funcionarios %}
+        <h3 class="section-gap">Histórico de alterações de acesso e salário</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Data</th><th>Administrador</th><th>Funcionário</th><th>Ação</th><th>Detalhes</th></tr></thead>
+          <tbody>{% for evento in auditoria_funcionarios %}
+            <tr><td>{{ evento.created_at }}</td><td>{{ evento.actor_name }}</td><td>{{ evento.employee_name }}</td><td>{{ evento.action }}</td><td>{{ evento.details_text }}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% endif %}
     </section>
+    {% endif %}
   </main>
 </body>
 </html>

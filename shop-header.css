@@ -11,6 +11,7 @@
 .header-actions .store-account-link { margin-left: 0; }
 .delivery-status, .checkout-status { min-height: 16px; margin: 4px 0; color: #a04627; font-size: .72rem; }
 .checkout-status.is-success { color: #35734d; }
+.nexus-order-track-link { display: inline-block; margin-top: 6px; color: #e75420; font-weight: 800; }
 .dark-theme.category-page, .dark-theme.product-page { background: #171717; color: #f5f5f2; }
 .dark-theme .category-topbar, .dark-theme .detail-topbar { border-color: #3a3a3a; background: #222; }
 .dark-theme .category-return, .dark-theme .category-bag, .dark-theme .detail-back-link, .dark-theme .detail-cart-link,
@@ -75,6 +76,8 @@
 .shop-checkout-fields { display: grid; gap: 9px; max-height: min(46vh, 480px); overflow-y: auto; padding: 10px 1px; }
 .shop-checkout-fields label { display: grid; gap: 5px; color: #686960; font-size: .7rem; }
 .shop-checkout-fields input, .shop-checkout-fields select { width: 100%; min-height: 36px; padding: 7px 9px; border: 1px solid #d8d6cf; border-radius: 0; background: #fff; color: #191a18; font: inherit; font-size: .76rem; }
+.shop-quote-button, .shipping-quote-button { min-height: 38px; border: 1px solid #191a18; background: transparent; color: inherit; font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.shop-quote-button:disabled, .shipping-quote-button:disabled { cursor: wait; opacity: .6; }
 .shop-address-row { display: grid; grid-template-columns: .7fr 1fr; gap: 8px; }
 .shop-delivery-status, .shop-order-status, .shop-order-note, .checkout-payment-note { margin: 0; color: #777870; font-size: .68rem; line-height: 1.5; }
 .shop-order-status { color: #a04627; }

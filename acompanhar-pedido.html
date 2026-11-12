@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#171717" />
+  <title>Acompanhar pedido | NEXUS</title>
+  <link rel="stylesheet" href="order-tracking.css" />
+  <script src="order-tracking.js" defer></script>
+</head>
+<body>
+  <header class="tracking-header">
+    <a class="tracking-brand" href="/" aria-label="NEXUS — voltar à loja"><span>N</span><strong>NEXUS</strong></a>
+    <a class="back-link" href="/">Voltar à loja</a>
+  </header>
+  <main class="tracking-main">
+    <section class="tracking-card">
+      <p class="eyebrow">Acompanhamento</p>
+      <h1>Seu pedido, passo a passo.</h1>
+      <p class="intro">Abra o link recebido ao finalizar a compra ou cole aqui o código de acompanhamento.</p>
+      <form id="trackingForm" class="tracking-form">
+        <label for="trackingToken">Código ou link de acompanhamento</label>
+        <div class="tracking-input-row">
+          <input id="trackingToken" name="token" type="text" autocomplete="off" spellcheck="false" placeholder="Cole o link ou código do pedido" />
+          <button type="submit">Consultar</button>
+        </div>
+      </form>
+      <p id="trackingMessage" class="tracking-message" role="status" aria-live="polite"></p>
+      <section id="trackingResult" class="tracking-result" hidden aria-live="polite">
+        <div class="result-heading">
+          <div><p class="eyebrow">Pedido</p><h2 id="orderNumber"></h2></div>
+          <span id="orderStatus" class="status-badge"></span>
+        </div>
+        <ol id="orderTimeline" class="order-timeline" aria-label="Etapas do pedido"></ol>
+        <div class="order-facts">
+          <p><span>Data do pedido</span><strong id="orderDate"></strong></p>
+          <p><span>Pagamento</span><strong id="orderPayment"></strong></p>
+          <p><span>Entrega</span><strong id="orderDelivery"></strong></p>
+          <p id="orderCepFact"><span>CEP</span><strong id="orderCep"></strong></p>
+          <p><span>Total</span><strong id="orderTotal"></strong></p>
+        </div>
+        <div class="items-section"><h3>Itens do pedido</h3><ul id="orderItems"></ul></div>
+        <p class="tracking-note">O status é atualizado pela equipe da NEXUS. Pagamentos e prazos são confirmados separadamente.</p>
+      </section>
+    </section>
+  </main>
+  <footer class="tracking-footer">NEXUS · Streetwear independente</footer>
+</body>
+</html>

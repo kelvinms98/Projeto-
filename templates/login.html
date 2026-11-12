@@ -31,19 +31,19 @@
   <main class="login-card">
     <div class="brand"><span class="brand-mark">N</span><span><small>Área de funcionários</small><strong>NEXUS</strong></span></div>
     <h1>Acesse o painel</h1>
-    <p class="intro">Entre com seu e-mail corporativo para consultar produtos, estoque e pedidos internos.</p>
+    <p class="intro">Entre com seu usuário e senha para acessar as ferramentas liberadas para sua função.</p>
     {% if erro %}<p class="error" role="alert">{{ erro }}</p>{% endif %}
-    <form action="{{ url_for('login') }}" method="post">
+    <form action="/login" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-      <label for="email">E-mail corporativo
-        <input type="email" id="email" name="email" autocomplete="username" required />
+      <label for="login">Usuário ou e-mail
+        <input type="text" id="login" name="login" autocomplete="username" required />
       </label>
       <label for="senha">Senha
         <input type="password" id="senha" name="senha" autocomplete="current-password" required />
       </label>
       <button type="submit">Entrar no painel</button>
     </form>
-    <a class="back" href="{{ url_for('index') }}">Voltar para a loja</a>
+    <a class="back" href="/">Voltar para a loja</a>
   </main>
 </body>
 </html>

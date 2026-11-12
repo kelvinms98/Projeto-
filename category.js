@@ -106,6 +106,6 @@ window.NEXUS_PRODUCTS_READY
     categoryProducts.innerHTML = '';
     categoryEmpty.hidden = false;
     categoryEmpty.querySelector('h2').textContent = 'Não foi possível carregar os produtos.';
-    categoryEmpty.querySelector('p').textContent = 'Verifique se o MySQL do XAMPP está disponível.';
+    categoryEmpty.querySelector('p').textContent = 'Verifique se o servidor local está disponível.';
     console.error('Falha ao carregar catálogo por categoria:', error);
   });

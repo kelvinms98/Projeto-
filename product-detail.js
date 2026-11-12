@@ -235,7 +235,7 @@ window.NEXUS_PRODUCTS_READY
   })
   .catch((error) => {
     document.getElementById('detailName').textContent = 'Catálogo indisponível';
-    document.getElementById('detailStatus').textContent = 'Verifique se o MySQL do XAMPP está disponível.';
+    document.getElementById('detailStatus').textContent = 'Verifique se o servidor local está disponível.';
     document.getElementById('detailAddCart').disabled = true;
     document.getElementById('detailBuyNow').disabled = true;
     console.error('Falha ao carregar detalhes do produto:', error);
