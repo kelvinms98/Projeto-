@@ -1,7 +1,8 @@
-from .db import Database
-from . import config
-import os
 import argparse
+import os
+
+from . import config
+from .db import Database
 
 
 def main():

@@ -11,12 +11,13 @@ Notas:
   - As imagens devem ter nomes que permitam casar com produtos (ex: "camiseta_oversized_respeito.jpg").
 """
 
-import os
 import argparse
-import requests
 import glob
 import json
+import os
 import re
+
+import requests
 
 
 def normalize(text: str) -> str:
@@ -37,29 +38,31 @@ def ensure_bucket(supabase_url: str, supabase_key: str, bucket: str) -> bool:
     # Check existing buckets
     r = requests.get(url, headers=headers, timeout=15)
     if r.status_code == 200:
-        try:
-            buckets = r.json()
-            if any(b.get('name') == bucket for b in buckets):
-                return True
-        except Exception:
-            pass
+        buckets = r.json()
+        if any(b.get('name') == bucket for b in buckets):
+            return True
     # Create bucket
     payload = {'name': bucket, 'public': True}
     r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=15)
     return r.status_code in (200, 201)
 
 
-def upload_file(supabase_url: str, supabase_key: str, bucket: str, file_path: str, dest_path: str = None) -> (bool, str):
+def upload_file(supabase_url: str, supabase_key: str, bucket: str, file_path: str, dest_path: str | None = None) -> (bool, str):
     dest = dest_path or os.path.basename(file_path)
     url = f"{supabase_url.rstrip('/')}/storage/v1/object/{bucket}"
     headers = {
         'Authorization': f'Bearer {supabase_key}',
         'apiKey': supabase_key,
     }
-    files = {'file': open(file_path, 'rb')}
     params = {'cacheControl': '3600'}
-    r = requests.post(url, headers=headers, files=files, params=params, timeout=60)
-    files['file'].close()
+    with open(file_path, 'rb') as image_file:
+        r = requests.post(
+            url,
+            headers=headers,
+            files={'file': image_file},
+            params=params,
+            timeout=60,
+        )
     if r.status_code in (200, 201):
         public_url = f"{supabase_url.rstrip('/')}/storage/v1/object/public/{bucket}/{dest}"
         return True, public_url

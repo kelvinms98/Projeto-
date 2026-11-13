@@ -1,12 +1,15 @@
 import os
-from dotenv import load_dotenv, find_dotenv
+
+import requests
+from dotenv import find_dotenv, load_dotenv
+from duckduckgo_search.exceptions import DuckDuckGoSearchException
 from google import genai
 from google.genai import types
 
 from . import config
 from .db import Database
-from .tools.web_search import run as web_search_run
 from .tools.fetch_page import run as fetch_page_run
+from .tools.web_search import run as web_search_run
 
 # Localiza o arquivo .env a partir da raiz do projeto e força a sobrescrita
 load_dotenv(find_dotenv(), override=True)
@@ -91,8 +94,8 @@ class Agent:
                 if name in runners:
                     try:
                         output = runners[name](**args)
-                    except Exception as exc:
-                        output = f"Erro ao executar a ferramenta {name}: {str(exc)}"
+                    except (DuckDuckGoSearchException, requests.RequestException, ValueError) as exc:
+                        output = f"Erro ao executar a ferramenta {name}: {exc!s}"
 
                     response = chat.send_message(
                         types.Part.from_function_response(
