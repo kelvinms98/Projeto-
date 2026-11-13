@@ -1,0 +1,64 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "NEXUS: Instalar dependências",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "NEXUS: Iniciar servidor local",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"start"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "NEXUS servidor",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"server.js"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "NEXUS: Comprar pelo terminal",
+			"type": "shell",
+			"command": "run_comprar.bat",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "NEXUS: Abrir compras CLI",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"run_comprar.bat"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "NEXUS: Comprar Python (segundo plano)",
+			"type": "shell",
+			"command": "C:\\Users\\kelvi\\Downloads\\Nexus\\.venv\\Scripts\\python.exe",
+			"args": [
+				"Comprar.py"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

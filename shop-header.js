@@ -1,7 +1,8 @@
+(() => {
 const themeToggle = document.getElementById('themeToggle');
 const favoritesToggle = document.getElementById('favoritesToggle');
 const cartToggle = document.getElementById('cartToggle');
-const shopProducts = Object.values(window.NEXUS_PRODUCTS || {});
+let shopProducts = [];
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function escapeShopText(value) {
@@ -52,11 +53,6 @@ function renderCart() {
   const cart = readStore('nexus-cart');
   const list = document.getElementById('shopCartList');
   const footer = document.getElementById('shopCartFooter');
-  const checkoutFieldIds = ['shopName', 'shopPhone', 'shopDeliveryOption', 'shopStreet', 'shopNumber', 'shopCEP', 'shopComplement', 'shopPaymentMethod'];
-  const previousCheckoutValues = Object.fromEntries(checkoutFieldIds.map((id) => [
-    id,
-    document.getElementById(id)?.value || ''
-  ]));
   if (!cart.length) {
     list.innerHTML = '<p class="shop-drawer-empty">Seu carrinho está vazio.</p>';
     footer.innerHTML = '<button type="button" class="shop-continue-button">Continuar comprando</button>';
@@ -66,7 +62,7 @@ function renderCart() {
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
   list.innerHTML = cart.map((item) => {
     const id = encodeURIComponent(String(item.id));
-    return `<article class="shop-cart-item"><div><strong>${escapeShopText(item.name)}</strong><small>Tamanho ${escapeShopText(item.size || 'M')}</small><b>${currency.format(Number(item.price || 0) * Number(item.quantity || 1))}</b></div><div class="shop-quantity"><button type="button" data-cart-action="minus" data-cart-id="${id}" aria-label="Diminuir quantidade">−</button><span>${Number(item.quantity || 1)}</span><button type="button" data-cart-action="plus" data-cart-id="${id}" aria-label="Aumentar quantidade">+</button><button type="button" class="shop-remove" data-cart-action="remove" data-cart-id="${id}">Remover</button></div></article>`;
+    return `<article class="shop-cart-item"><div><strong>${escapeShopText(item.name)}</strong><small>${escapeShopText(item.color || 'Cor não informada')} · Tamanho ${escapeShopText(item.size || '—')}</small><b>${currency.format(Number(item.price || 0) * Number(item.quantity || 1))}</b></div><div class="shop-quantity"><button type="button" data-cart-action="minus" data-cart-id="${id}" aria-label="Diminuir quantidade">−</button><span>${Number(item.quantity || 1)}</span><button type="button" data-cart-action="plus" data-cart-id="${id}" aria-label="Aumentar quantidade">+</button><button type="button" class="shop-remove" data-cart-action="remove" data-cart-id="${id}">Remover</button></div></article>`;
   }).join('');
   footer.innerHTML = `
     <div><span>Subtotal</span><strong>${currency.format(subtotal)}</strong></div>
@@ -74,53 +70,55 @@ function renderCart() {
     <div><span id="shopDeliverySummary">Entrega</span><strong id="shopDeliveryFee">Selecione</strong></div>
     <div class="shop-total"><span>Total</span><strong id="shopCartTotal">${currency.format(subtotal)}</strong></div>
     <div class="shop-checkout-fields">
-      <strong class="shop-checkout-section-title">Contato e entrega</strong>
-      <label>Nome completo<input id="shopName" autocomplete="name" /></label>
-      <label>Telefone<input id="shopPhone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" /></label>
-      <label>Modalidade de entrega<select id="shopDeliveryOption"><option value="">Carregando opções...</option></select></label>
+      <label>CEP de destino<input id="shopCEP" autocomplete="postal-code" inputmode="numeric" /></label>
+      <button type="button" class="shop-quote-button" data-calculate-shipping="shop">Calcular frete</button>
       <p class="shop-delivery-status" id="shopDeliveryStatus" role="status"></p>
+      <label>Modalidade de entrega<select id="shopDeliveryOption"><option value="">Carregando opções...</option></select></label>
       <div class="shop-address-fields" id="shopAddressFields">
         <label>Rua<input id="shopStreet" autocomplete="street-address" /></label>
-        <div class="shop-address-row"><label>Número<input id="shopNumber" /></label><label>CEP<input id="shopCEP" autocomplete="postal-code" /></label></div>
+        <div class="shop-address-row"><label>Número<input id="shopNumber" /></label></div>
         <label>Complemento<input id="shopComplement" /></label>
       </div>
-      <strong class="shop-checkout-section-title">Forma de pagamento</strong>
-      <label>Pagamento<select id="shopPaymentMethod"><option value="pix">PIX · 10% de desconto</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="paypal">PayPal</option></select></label>
-      <p class="shop-order-note">Frete grátis para entregas a partir de R$ 500 em produtos. O pedido ficará aguardando confirmação; o site não processa pagamentos nesta etapa.</p>
+      <label>Nome para o pedido<input id="shopName" autocomplete="name" /></label>
+      <label>E-mail para confirmação<input id="shopEmail" type="email" autocomplete="email" /></label>
+      <label>Telefone<input id="shopPhone" autocomplete="tel" /></label>
+      <label>Pagamento<select id="shopPaymentMethod"><option value="pix">PIX · 10% de desconto</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option></select></label>
+      <p class="shop-order-note">O pedido ficará aguardando a confirmação do pagamento. O site não processa pagamentos nesta etapa.</p>
       <p class="shop-order-status" id="shopOrderStatus" role="status" aria-live="polite"></p>
       <button type="button" class="shop-order-button" data-confirm-order>Registrar pedido</button>
     </div>
     <button type="button" class="shop-continue-button">Continuar comprando</button>`;
 
   const deliverySelect = document.getElementById('shopDeliveryOption');
-  for (const id of ['shopName', 'shopPhone', 'shopStreet', 'shopNumber', 'shopCEP', 'shopComplement', 'shopPaymentMethod']) {
-    document.getElementById(id).value = previousCheckoutValues[id];
-  }
   const updateTotals = () => {
     const selected = (window.NEXUS_DELIVERY_OPTIONS || []).find((option) => option.id === deliverySelect.value);
-    const freeShippingThreshold = 500;
-    const hasFreeShipping = Boolean(selected?.requires_address && subtotal >= freeShippingThreshold);
-    const fee = hasFreeShipping ? 0 : Number(selected?.fee || 0);
+    const quote = window.NEXUS_SHIPPING_QUOTE;
+    const validQuote = quote?.cep === String(document.getElementById('shopCEP')?.value || '').replace(/\D/g, '');
+    const fee = Number(selected?.requires_address && validQuote ? quote.fee : selected?.fee || 0);
     const pix = document.getElementById('shopPaymentMethod').value === 'pix';
     const discount = pix ? subtotal * 0.1 : 0;
     document.getElementById('shopCartDiscount').textContent = `−${currency.format(discount)}`;
-    document.getElementById('shopDeliveryFee').textContent = selected ? hasFreeShipping ? 'Grátis' : currency.format(fee) : 'Selecione';
+    document.getElementById('shopDeliveryFee').textContent = selected ? currency.format(fee) : 'Selecione';
     document.getElementById('shopDeliverySummary').textContent = selected ? `${selected.name} · ${selected.estimate}` : 'Entrega';
     document.getElementById('shopCartTotal').textContent = currency.format(subtotal - discount + fee);
     document.getElementById('shopAddressFields').hidden = !selected?.requires_address;
   };
   deliverySelect.addEventListener('change', updateTotals);
   document.getElementById('shopPaymentMethod').addEventListener('change', updateTotals);
+  window.addEventListener('nexus:shipping-quote-updated', updateTotals);
   window.NexusStoreAccount?.ready.then(() => {
-    if (!deliverySelect.isConnected) return;
     const options = window.NEXUS_DELIVERY_OPTIONS || [];
     deliverySelect.innerHTML = options.map((option) =>
       `<option value="${escapeShopText(option.id)}">${escapeShopText(option.name)} · ${currency.format(option.fee)} · ${escapeShopText(option.estimate)}</option>`).join('');
-    if (options.some((option) => option.id === previousCheckoutValues.shopDeliveryOption)) {
-      deliverySelect.value = previousCheckoutValues.shopDeliveryOption;
-    }
+    window.NexusStoreAccount?.renderDeliveryOptions();
     deliverySelect.disabled = options.length === 0;
-    if (!options.length) document.getElementById('shopDeliveryStatus').textContent = 'Configure a conexão com o banco para carregar as modalidades.';
+    if (!options.length) {
+      const status = document.getElementById('shopDeliveryStatus');
+      if (!status.textContent) {
+        status.textContent = window.NEXUS_DELIVERY_ERROR
+          || 'Não há modalidades de entrega disponíveis no banco de dados.';
+      }
+    }
     updateTotals();
   });
 }
@@ -130,7 +128,7 @@ function renderFavorites() {
   const savedProducts = shopProducts.filter((product) => favorites.includes(product.name));
   const list = document.getElementById('shopFavoritesList');
   list.innerHTML = savedProducts.length
-    ? savedProducts.map((product) => `<a class="shop-favorite-item" href="${encodeURIComponent(product.id)}.html"><img src="${product.images[0]}" alt="" /><span><strong>${product.name}</strong><small>${currency.format(product.price)}</small></span><span aria-hidden="true">›</span></a>`).join('')
+    ? savedProducts.map((product) => `<a class="shop-favorite-item" href="produto.html?id=${encodeURIComponent(product.id)}"><img src="${escapeShopText(product.images[0])}" alt="" /><span><strong>${escapeShopText(product.name)}</strong><small>${Number.isFinite(product.price) ? currency.format(product.price) : 'Preço não cadastrado'}</small></span><span aria-hidden="true">›</span></a>`).join('')
     : '<p class="shop-drawer-empty">Você ainda não favoritou nenhuma peça.</p>';
 }
 
@@ -166,6 +164,15 @@ function openDrawer(kind) {
 setTheme(localStorage.getItem('nexus-theme') || 'light');
 ensureDrawers();
 updateCounts();
+window.NEXUS_PRODUCTS_READY
+  .then((products) => {
+    shopProducts = products;
+    updateCounts();
+    renderFavorites();
+  })
+  .catch((error) => {
+    console.error('Falha ao carregar os produtos do servidor local:', error);
+  });
 
 themeToggle.addEventListener('click', () => setTheme(document.body.classList.contains('dark-theme') ? 'light' : 'dark'));
 cartToggle.addEventListener('click', () => openDrawer('cart'));
@@ -195,6 +202,13 @@ document.addEventListener('click', (event) => {
     });
   }
 
+  if (event.target.closest('.add-cart-btn')) {
+    requestAnimationFrame(() => {
+      updateCounts();
+      renderCart();
+      openDrawer('cart');
+    });
+  }
   if (event.target.closest('#detailAddCart, #detailBuyNow')) requestAnimationFrame(updateCounts);
 });
 
@@ -208,3 +222,4 @@ window.addEventListener('storage', (event) => {
     renderFavorites();
   }
 });
+})();

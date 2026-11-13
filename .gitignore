@@ -8,3 +8,7 @@ __pycache__/
 build/
 dist/
 .env
+data/nexus-store.sqlite3
+data/nexus-store.sqlite3-shm
+data/nexus-store.sqlite3-wal
+node_modules/

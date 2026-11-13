@@ -3,9 +3,9 @@
 
 #define MAX_PRODUTOS 100
 #define MAX_VENDAS 500
-#define MAX_EMAIL 50
-#define MAX_SENHA 20
-#define MAX_TIPO 20
+#define MAX_EMAIL 255
+#define MAX_SENHA 129
+#define MAX_TIPO 81
 
 typedef struct {
     int id;

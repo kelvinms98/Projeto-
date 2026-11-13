@@ -1,0 +1,30 @@
+import json
+import os
+import sys
+from urllib.error import URLError
+from urllib.request import urlopen
+
+
+def testar_conexao():
+    base_url = os.environ.get("NEXUS_API_URL", "http://127.0.0.1:8081").rstrip("/")
+    try:
+        with urlopen(f"{base_url}/api/health", timeout=5) as response:
+            health = json.loads(response.read().decode("utf-8"))
+    except (URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
+        print(f"Não foi possível conectar ao servidor NEXUS: {error}", file=sys.stderr)
+        return 1
+
+    if (
+        not isinstance(health, dict)
+        or health.get("status") != "ok"
+        or health.get("database") != "sqlite"
+    ):
+        print("O servidor respondeu, mas não confirmou o banco SQLite.", file=sys.stderr)
+        return 1
+
+    print("Conexão com o servidor NEXUS e o SQLite confirmada.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(testar_conexao())
