@@ -158,18 +158,19 @@ function renderCatalog(products) {
       colors.length ? `Cores: ${colors.join(', ')}` : '',
       sizes.length ? `Tamanhos: ${sizes.join(', ')}` : '',
     ].filter(Boolean).join(' · ');
+    const detailUrl = product.detailPage || `produto.html?id=${encodeURIComponent(product.id)}`;
 
     return `
       <article class="product-card" data-product-id="${escapeCatalogText(product.id)}" data-category="${escapeCatalogText(product.categorySlug)}">
         <div class="product-image">
-          <a class="product-detail-link" href="produto.html?id=${encodeURIComponent(product.id)}" aria-label="Ver detalhes de ${escapeCatalogText(product.name)}">
+          <a class="product-detail-link" href="${escapeCatalogText(detailUrl)}" aria-label="Ver detalhes de ${escapeCatalogText(product.name)}">
             <img src="${escapeCatalogText(product.images[0])}" alt="${escapeCatalogText(product.name)}" />
           </a>
           <button type="button" class="favorite-btn" data-favorite-product="${escapeCatalogText(product.name)}" aria-label="Favoritar ${escapeCatalogText(product.name)}" aria-pressed="false">♡</button>
         </div>
         <div class="product-body">
           <div class="product-topline"><span>${escapeCatalogText(product.category)}</span><strong>${escapeCatalogText(priceLabel)}</strong></div>
-          <h4><a class="product-title-link" href="produto.html?id=${encodeURIComponent(product.id)}">${escapeCatalogText(product.name)}</a></h4>
+          <h4><a class="product-title-link" href="${escapeCatalogText(detailUrl)}">${escapeCatalogText(product.name)}</a></h4>
           <p>${escapeCatalogText(variantsLabel || product.description)}</p>
           <button type="button" class="add-cart-btn" data-product="${escapeCatalogText(product.name)}" data-product-variant="${availableVariant?.id ?? ''}" ${availableVariant ? '' : 'disabled'}>Adicionar ao carrinho</button>
         </div>
@@ -246,7 +247,7 @@ window.NEXUS_PRODUCTS_READY
   .then(renderCatalog)
   .catch((error) => {
     if (productGrid) {
-      productGrid.innerHTML = '<p class="cart-empty">Não foi possível carregar o catálogo do banco de dados.</p>';
+      productGrid.innerHTML = `<p class="cart-empty">${escapeCatalogText(error.message || 'Não foi possível carregar o catálogo do banco de dados.')}</p>`;
     }
     console.error('Falha ao carregar produtos do servidor local:', error);
   });

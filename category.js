@@ -1,9 +1,9 @@
 const categoryLabels = {
   camiseta: 'Camisetas',
   moletom: 'Moletons e blusas',
-  jaqueta: 'Jaquetas',
   calca: 'Calças',
-  bone: 'Bonés'
+  bone: 'Bonés',
+  touca: 'Toucas',
 };
 const params = new URLSearchParams(window.location.search);
 const selectedCategory = params.get('categoria') || '';
@@ -56,20 +56,21 @@ function renderCategory(products) {
       colors.length ? `Cores: ${colors.join(', ')}` : '',
       sizes.length ? `Tamanhos: ${sizes.join(', ')}` : '',
     ].filter(Boolean).join(' · ');
+    const detailUrl = product.detailPage || `produto.html?id=${encodeURIComponent(product.id)}`;
 
     return `
       <article class="product-card category-product-card">
         <div class="product-image">
-          <a class="category-product-image" href="produto.html?id=${encodeURIComponent(product.id)}" aria-label="Ver ${escapeCategoryText(product.name)}">
+          <a class="category-product-image" href="${escapeCategoryText(detailUrl)}" aria-label="Ver ${escapeCategoryText(product.name)}">
             <img src="${escapeCategoryText(product.images[0])}" alt="${escapeCategoryText(product.name)}" />
           </a>
           <button type="button" class="favorite-btn category-favorite" data-favorite="${escapeCategoryText(product.name)}" aria-label="Favoritar ${escapeCategoryText(product.name)}" aria-pressed="false">♡</button>
         </div>
         <div class="product-body">
           <div class="product-topline"><span>${escapeCategoryText(product.category)}</span><strong>${escapeCategoryText(priceLabel)}</strong></div>
-          <h2><a href="produto.html?id=${encodeURIComponent(product.id)}">${escapeCategoryText(product.name)}</a></h2>
+          <h2><a href="${escapeCategoryText(detailUrl)}">${escapeCategoryText(product.name)}</a></h2>
           <p>${escapeCategoryText(variantSummary || product.description)}</p>
-          <a class="category-view-product" href="produto.html?id=${encodeURIComponent(product.id)}">Ver detalhes</a>
+          <a class="category-view-product" href="${escapeCategoryText(detailUrl)}">Ver detalhes</a>
         </div>
       </article>
     `;
@@ -106,6 +107,6 @@ window.NEXUS_PRODUCTS_READY
     categoryProducts.innerHTML = '';
     categoryEmpty.hidden = false;
     categoryEmpty.querySelector('h2').textContent = 'Não foi possível carregar os produtos.';
-    categoryEmpty.querySelector('p').textContent = 'Verifique se o servidor local está disponível.';
+    categoryEmpty.querySelector('p').textContent = error.message || 'Não foi possível carregar o catálogo.';
     console.error('Falha ao carregar catálogo por categoria:', error);
   });

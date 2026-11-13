@@ -23,7 +23,10 @@ function formatPrice(value) {
 }
 
 function getSelectedColor() {
-  return colorOptions.querySelector('input[name="color"]:checked')?.value || '';
+  return colorOptions?.querySelector('input[name="color"]:checked')?.value
+    || product?.variants.find((variant) => variant.stock > 0 && Number.isFinite(variant.price))?.color
+    || product?.variants[0]?.color
+    || '';
 }
 
 function getSelectedSize() {
@@ -59,15 +62,27 @@ function updatePurchaseState() {
 }
 
 function renderGallery() {
-  const images = product.images.length ? product.images : ['jaqueta-nexus.svg'];
+  const images = product.images.length ? product.images : ['imagens/jaqueta-nexus.svg'];
+  activeImage = Math.max(0, Math.min(activeImage, images.length - 1));
   gallery.innerHTML = `
-    <div class="detail-main-image"><img src="${escapeDetailText(images[activeImage])}" alt="${escapeDetailText(product.name)}" /></div>
+    <div class="detail-main-image">
+      <img src="${escapeDetailText(images[activeImage])}" alt="${escapeDetailText(product.name)}" />
+      ${images.length > 1 ? `
+        <div class="detail-gallery-arrows" aria-label="Navegar pelas fotos">
+          <button type="button" data-image-step="-1" aria-label="Foto anterior" ${activeImage === 0 ? 'disabled' : ''}>‹</button>
+          <button type="button" data-image-step="1" aria-label="Próxima foto" ${activeImage === images.length - 1 ? 'disabled' : ''}>›</button>
+        </div>
+      ` : ''}
+    </div>
     ${images.length > 1 ? `
       <div class="detail-thumbnails" aria-label="Imagens do produto">
         ${images.map((image, index) => `
-          <button type="button" class="detail-thumbnail ${index === activeImage ? 'is-active' : ''}" data-image-index="${index}" aria-label="Ver imagem ${index + 1}"><img src="${escapeDetailText(image)}" alt="" /></button>
+          <button type="button" class="detail-thumbnail ${index === activeImage ? 'is-active' : ''}" data-image-index="${index}" aria-label="Ver imagem ${index + 1}" aria-pressed="${index === activeImage}">
+            <img src="${escapeDetailText(image)}" alt="" />
+          </button>
         `).join('')}
       </div>
+      <div class="detail-image-counter" aria-live="polite">${activeImage + 1} / ${images.length}</div>
     ` : ''}
   `;
 }
@@ -112,19 +127,23 @@ function renderProduct() {
     (variant) => variant.stock > 0 && Number.isFinite(variant.price)
   );
   const initialColor = firstAvailable?.color ?? colors[0] ?? '';
-  colorOptions.innerHTML = colors.map((color, index) => `
-    <label class="size-option ${color === initialColor ? 'is-selected' : ''}">
-      <input type="radio" name="color" value="${escapeDetailText(color)}" ${color === initialColor ? 'checked' : ''} />
-      <span>${escapeDetailText(color || 'Não informada')}</span>
-    </label>
-  `).join('');
+  if (colorOptions) {
+    colorOptions.innerHTML = colors.map((color) => `
+      <label class="size-option ${color === initialColor ? 'is-selected' : ''}">
+        <input type="radio" name="color" value="${escapeDetailText(color)}" ${color === initialColor ? 'checked' : ''} />
+        <span>${escapeDetailText(color || 'Não informada')}</span>
+      </label>
+    `).join('');
+  }
   renderSizes();
 
   const headings = product.category === 'Calça'
     ? ['Tamanho', 'Cintura (cm)', 'Quadril (cm)', 'Comprimento (cm)']
     : product.category === 'Boné'
       ? ['Tamanho', 'Circunferência (cm)', 'Altura (cm)', 'Aba (cm)']
-      : ['Tamanho', 'Largura (cm)', 'Comprimento (cm)', 'Manga (cm)'];
+      : product.category === 'Touca'
+        ? ['Tamanho', 'Circunferência sem esticar (cm)', 'Altura (cm)', 'Abertura (cm)']
+        : ['Tamanho', 'Largura (cm)', 'Comprimento (cm)', 'Manga (cm)'];
   document.getElementById('measurementHeadings').innerHTML = headings
     .map((heading) => `<th scope="col">${escapeDetailText(heading)}</th>`)
     .join('');
@@ -135,11 +154,64 @@ function renderProduct() {
         : `<td>${escapeDetailText(value)}</td>`).join('')}</tr>
     `).join('')
     : '<tr><td colspan="4">Não há medidas cadastradas para este produto.</td></tr>';
-  document.getElementById('detailReviews').innerHTML = product.reviews.length
-    ? product.reviews.map((review) => `
-      <article class="review-item"><div class="review-topline"><strong>${escapeDetailText(review.name)}</strong><time>${escapeDetailText(review.date)}</time></div><div class="review-stars" aria-label="${review.rating} de 5 estrelas">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div><p>${escapeDetailText(review.text)}</p></article>
-    `).join('')
+  const tableNote = document.querySelector('.table-note');
+  if (tableNote) {
+    tableNote.textContent = 'Medidas em centímetros são estimativas de referência e podem variar até 2 cm. Confirme a modelagem e a composição com o fornecedor antes de divulgar a ficha final.';
+  }
+  const specs = document.querySelector('.detail-specs');
+  if (specs && !specs.querySelector('.specs-disclaimer')) {
+    const disclaimer = document.createElement('p');
+    disclaimer.className = 'specs-disclaimer';
+    disclaimer.textContent = 'Modelagem e composição são estimativas ilustrativas; confirme as especificações reais da peça com o fornecedor.';
+    specs.append(disclaimer);
+  }
+
+  const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+  const reviewSection = document.querySelector('.reviews-section');
+  const reviewKicker = reviewSection?.querySelector('.detail-section-heading > span');
+  if (reviewKicker) reviewKicker.textContent = 'AVALIAÇÕES DE EXEMPLO';
+  const reviewList = document.getElementById('detailReviews');
+  if (reviewSection && reviewList && !reviewSection.querySelector('.review-disclaimer')) {
+    const disclaimer = document.createElement('p');
+    disclaimer.className = 'review-disclaimer';
+    disclaimer.textContent = 'Os textos abaixo são exemplos ilustrativos para apresentar o layout; não são avaliações enviadas por clientes reais.';
+    reviewList.before(disclaimer);
+  }
+  reviewList.innerHTML = reviews.length
+    ? reviews.map((review) => {
+      const rating = Math.max(0, Math.min(5, Math.round(Number(review.rating) || 0)));
+      return `
+        <article class="review-item">
+          <div class="review-topline"><strong>${escapeDetailText(review.name || 'Cliente')}</strong><span class="review-sample-label">DEMONSTRAÇÃO</span></div>
+          <div class="review-stars" aria-label="${rating} de 5 estrelas">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</div>
+          <p>${escapeDetailText(review.text)}</p>
+        </article>
+      `;
+    }).join('')
     : '<p>Ainda não há avaliações cadastradas para este produto.</p>';
+
+  const ratingElement = document.querySelector('.detail-rating');
+  const ratingStars = ratingElement?.querySelector('span');
+  const ratingLink = ratingElement?.querySelector('a');
+  if (ratingElement && ratingStars) {
+    const average = reviews.length
+      ? reviews.reduce((sum, review) => sum + Math.max(0, Math.min(5, Number(review.rating) || 0)), 0) / reviews.length
+      : 0;
+    const displayAverage = Math.round(average * 10) / 10;
+    const fullStars = Math.floor(average);
+    ratingStars.textContent = `${'★'.repeat(fullStars)}${'☆'.repeat(5 - fullStars)}`;
+    ratingStars.setAttribute('aria-label', reviews.length ? `Nota ilustrativa ${displayAverage} de 5` : 'Ainda sem avaliações');
+    let ratingSummary = ratingElement.querySelector('.detail-rating-summary');
+    if (!ratingSummary) {
+      ratingSummary = document.createElement('span');
+      ratingSummary.className = 'detail-rating-summary';
+      ratingStars.after(ratingSummary);
+    }
+    ratingSummary.textContent = reviews.length
+      ? `${displayAverage.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/5 · exemplo`
+      : 'Sem avaliações';
+    if (ratingLink) ratingLink.textContent = 'Ver exemplos';
+  }
 
   const favoriteButton = document.getElementById('detailFavorite');
   const favorites = JSON.parse(localStorage.getItem(favoritesKey) || '[]');
@@ -178,13 +250,22 @@ function addProductToCart() {
 }
 
 gallery.addEventListener('click', (event) => {
+  const stepButton = event.target.closest('[data-image-step]');
+  if (stepButton && product) {
+    activeImage = Math.max(
+      0,
+      Math.min(product.images.length - 1, activeImage + Number(stepButton.dataset.imageStep)),
+    );
+    renderGallery();
+    return;
+  }
   const button = event.target.closest('[data-image-index]');
   if (!button || !product) return;
   activeImage = Number(button.dataset.imageIndex);
   renderGallery();
 });
 
-colorOptions.addEventListener('change', (event) => {
+colorOptions?.addEventListener('change', (event) => {
   colorOptions.querySelectorAll('.size-option').forEach((option) => {
     option.classList.toggle('is-selected', option.contains(event.target));
   });
@@ -223,7 +304,11 @@ document.getElementById('detailBuyNow').addEventListener('click', () => {
 
 window.NEXUS_PRODUCTS_READY
   .then((products) => {
-    product = products.find((item) => item.id === params.get('id')) || null;
+    const productId = params.get('id') || document.body.dataset.productId;
+    const productName = document.body.dataset.productName;
+    product = products.find(
+      (item) => item.id === productId || item.name === productName,
+    ) || null;
     if (!product) {
       document.getElementById('detailName').textContent = 'Produto não encontrado';
       document.getElementById('detailStatus').textContent = 'Volte à loja e escolha um produto cadastrado.';
@@ -235,7 +320,7 @@ window.NEXUS_PRODUCTS_READY
   })
   .catch((error) => {
     document.getElementById('detailName').textContent = 'Catálogo indisponível';
-    document.getElementById('detailStatus').textContent = 'Verifique se o servidor local está disponível.';
+    document.getElementById('detailStatus').textContent = error.message || 'Não foi possível carregar o catálogo.';
     document.getElementById('detailAddCart').disabled = true;
     document.getElementById('detailBuyNow').disabled = true;
     console.error('Falha ao carregar detalhes do produto:', error);

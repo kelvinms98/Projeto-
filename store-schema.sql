@@ -8,10 +8,11 @@ create table if not exists public.store_catalog (
 );
 
 insert into public.store_catalog (id, name, unit_price) values
-  ('graphic-nexus', 'Graphic Nexus', 249.00),
-  ('nexus-logo-tee', 'Nexus Logo Tee', 189.00),
-  ('cap-nexus', 'Cap Nexus', 119.00),
-  ('utility-cargo', 'Utility Cargo', 329.00)
+  ('graphic-nexus', 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 249.00),
+  ('nexus-logo-tee', 'NEXUS “WASTED FUR” HOODIE', 189.00),
+  ('cap-nexus', '5-PANEL PIET - OLIVE MINIMAL', 219.00),
+  ('utility-cargo', 'NEXUS PATCHWORK BAGGY', 329.00),
+  ('beanie-destroyed-neon', 'BEANIE DESTROYED NEON', 249.00)
 on conflict (id) do update set name = excluded.name, unit_price = excluded.unit_price, active = true;
 
 create table if not exists public.delivery_options (

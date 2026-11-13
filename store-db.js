@@ -192,6 +192,15 @@ function openDatabase(databasePath = DATABASE_PATH, { seed = true } = {}) {
       updated_by INTEGER REFERENCES funcionarios(id_funcionario),
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS product_gallery (
+      id INTEGER PRIMARY KEY,
+      product_name TEXT NOT NULL COLLATE NOCASE,
+      image_url TEXT NOT NULL,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      UNIQUE (product_name, image_url)
+    );
+    CREATE INDEX IF NOT EXISTS idx_product_gallery_name
+      ON product_gallery(product_name COLLATE NOCASE, display_order, id);
     CREATE TABLE IF NOT EXISTS cash_paid_sales (
       order_id INTEGER PRIMARY KEY REFERENCES venda(id_venda),
       employee_id INTEGER NOT NULL REFERENCES funcionarios(id_funcionario),
@@ -227,6 +236,33 @@ function openDatabase(databasePath = DATABASE_PATH, { seed = true } = {}) {
     CREATE INDEX IF NOT EXISTS idx_cash_entries_register ON cash_entries(register_id, created_at);
   `);
 
+  for (const table of ['product_media', 'product_gallery']) {
+    db.prepare(`
+      UPDATE ${table}
+      SET image_url = 'imagens/' || image_url
+      WHERE instr(image_url, '/') = 0
+    `).run();
+  }
+  db.prepare(`
+    UPDATE product_media
+    SET image_url = 'imagens/CNM.jpeg'
+    WHERE image_url = 'imagens/NMC.jpeg'
+  `).run();
+  const outdatedNeymarImages = db.prepare(`
+    SELECT id, product_name FROM product_gallery WHERE image_url = 'imagens/NMC.jpeg'
+  `).all();
+  for (const image of outdatedNeymarImages) {
+    const replacementExists = db.prepare(`
+      SELECT 1 FROM product_gallery
+      WHERE product_name = ? COLLATE NOCASE AND image_url = 'imagens/CNM.jpeg'
+    `).get(image.product_name);
+    if (replacementExists) {
+      db.prepare('DELETE FROM product_gallery WHERE id = ?').run(image.id);
+    } else {
+      db.prepare("UPDATE product_gallery SET image_url = 'imagens/CNM.jpeg' WHERE id = ?").run(image.id);
+    }
+  }
+
   const saleColumns = new Set(db.prepare('PRAGMA table_info(venda)').all().map((column) => column.name));
   if (!saleColumns.has('id_cliente')) {
     db.exec('ALTER TABLE venda ADD COLUMN id_cliente INTEGER REFERENCES clientes(id_cliente)');
@@ -243,6 +279,35 @@ function openDatabase(databasePath = DATABASE_PATH, { seed = true } = {}) {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_venda_tracking_token
     ON venda(tracking_token) WHERE tracking_token IS NOT NULL
   `);
+
+  const productRenames = [
+    ['Graphic Nexus', 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012'],
+    ['Nexus Logo Tee', 'NEXUS “WASTED FUR” HOODIE'],
+    ['Utility Cargo', 'NEXUS PATCHWORK BAGGY'],
+    ['Cap Nexus', '5-PANEL PIET - OLIVE MINIMAL'],
+  ];
+  runTransaction(db, () => {
+    for (const [oldName, newName] of productRenames) {
+      const oldProduct = db.prepare(
+        'SELECT 1 FROM produto WHERE nome = ? COLLATE NOCASE LIMIT 1',
+      ).get(oldName);
+      const newProduct = db.prepare(
+        'SELECT 1 FROM produto WHERE nome = ? COLLATE NOCASE LIMIT 1',
+      ).get(newName);
+      if (!oldProduct || newProduct) continue;
+
+      db.prepare('UPDATE produto SET nome = ? WHERE nome = ? COLLATE NOCASE').run(newName, oldName);
+      for (const table of ['product_media', 'product_gallery']) {
+        db.prepare(`
+          UPDATE ${table} SET product_name = ?
+          WHERE product_name = ? COLLATE NOCASE
+            AND NOT EXISTS (
+              SELECT 1 FROM ${table} WHERE product_name = ? COLLATE NOCASE
+            )
+        `).run(newName, oldName, newName);
+      }
+    }
+  });
 
   if (seed) seedDefaults(db);
   return db;
@@ -265,25 +330,51 @@ function seedDefaults(db) {
     const productCount = db.prepare('SELECT COUNT(*) AS count FROM produto').get().count;
     if (productCount === 0) {
       const products = [
-        ['Graphic Nexus', 'P', 'Unica', 249, 100],
-        ['Graphic Nexus', 'M', 'Unica', 249, 100],
-        ['Graphic Nexus', 'G', 'Unica', 249, 100],
-        ['Graphic Nexus', 'GG', 'Unica', 249, 100],
-        ['Nexus Logo Tee', 'P', 'Unica', 189, 100],
-        ['Nexus Logo Tee', 'M', 'Unica', 189, 100],
-        ['Nexus Logo Tee', 'G', 'Unica', 189, 100],
-        ['Nexus Logo Tee', 'GG', 'Unica', 189, 100],
-        ['Cap Nexus', 'Unico', 'Unica', 119, 100],
-        ['Utility Cargo', '38', 'Unica', 329, 100],
-        ['Utility Cargo', '40', 'Unica', 329, 100],
-        ['Utility Cargo', '42', 'Unica', 329, 100],
-        ['Utility Cargo', '44', 'Unica', 329, 100],
-        ['Utility Cargo', '46', 'Unica', 329, 100],
+        ['NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'P', 'Unica', 249, 100],
+        ['NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'M', 'Unica', 249, 100],
+        ['NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'G', 'Unica', 249, 100],
+        ['NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'GG', 'Unica', 249, 100],
+        ['NEXUS “WASTED FUR” HOODIE', 'P', 'Unica', 189, 100],
+        ['NEXUS “WASTED FUR” HOODIE', 'M', 'Unica', 189, 100],
+        ['NEXUS “WASTED FUR” HOODIE', 'G', 'Unica', 189, 100],
+        ['NEXUS “WASTED FUR” HOODIE', 'GG', 'Unica', 189, 100],
+        ['5-PANEL PIET - OLIVE MINIMAL', 'Unico', 'Olive Minimal', 219, 100],
+        ['NEXUS PATCHWORK BAGGY', '38', 'Unica', 329, 100],
+        ['NEXUS PATCHWORK BAGGY', '40', 'Unica', 329, 100],
+        ['NEXUS PATCHWORK BAGGY', '42', 'Unica', 329, 100],
+        ['NEXUS PATCHWORK BAGGY', '44', 'Unica', 329, 100],
+        ['NEXUS PATCHWORK BAGGY', '46', 'Unica', 329, 100],
+        ['BEANIE DESTROYED NEON', 'Unico', 'Neon', 249, 100],
       ];
       const insertProduct = db.prepare(`
         INSERT INTO produto (nome, tamanho, cor, preco, estoque) VALUES (?, ?, ?, ?, ?)
       `);
       products.forEach((product) => insertProduct.run(...product));
+    }
+
+    const beanieExists = db.prepare(
+      'SELECT 1 FROM produto WHERE nome = ? COLLATE NOCASE LIMIT 1',
+    ).get('BEANIE DESTROYED NEON');
+    if (!beanieExists) {
+      db.prepare(`
+        INSERT INTO produto (nome, tamanho, cor, preco, estoque)
+        VALUES (?, ?, ?, ?, ?)
+      `).run('BEANIE DESTROYED NEON', 'Unico', 'Neon', 249, 100);
+    }
+
+    const galleryProducts = [
+      ['NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', ['imagens/NM1.jpeg', 'imagens/NM2.jpeg', 'imagens/NM3.jpeg', 'imagens/NM4.jpeg', 'imagens/CNM.jpeg']],
+      ['NEXUS “WASTED FUR” HOODIE', ['imagens/NWF1.jpeg', 'imagens/NWF2.jpeg', 'imagens/NWF3.jpeg', 'imagens/NWF4.jpeg', 'imagens/NWF5.jpeg']],
+      ['NEXUS PATCHWORK BAGGY', ['imagens/NPB0.jpeg', 'imagens/NPB1.jpeg', 'imagens/NPB2.jpeg', 'imagens/NPB3.jpeg']],
+      ['BEANIE DESTROYED NEON', ['imagens/BD1.jpeg', 'imagens/BD2.jpeg', 'imagens/BD3.jpeg', 'imagens/BD4.jpeg', 'imagens/BD5.jpeg', 'imagens/BD6.jpeg']],
+      ['5-PANEL PIET - OLIVE MINIMAL', ['imagens/PP0.jpeg', 'imagens/PP1.jpeg', 'imagens/PP2.jpeg', 'imagens/PP3.jpeg']],
+    ];
+    const insertGalleryImage = db.prepare(`
+      INSERT OR IGNORE INTO product_gallery (product_name, image_url, display_order)
+      VALUES (?, ?, ?)
+    `);
+    for (const [productName, images] of galleryProducts) {
+      images.forEach((image, index) => insertGalleryImage.run(productName, image, index));
     }
 
     const supplierCount = db.prepare('SELECT COUNT(*) AS count FROM suppliers').get().count;

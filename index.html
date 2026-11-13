@@ -14,7 +14,7 @@
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&display=swap"
         rel="stylesheet"
       />
-      <link rel="stylesheet" href="style.css?v=11" />
+      <link rel="stylesheet" href="style.css?v=16" />
       <link rel="stylesheet" href="shop-header.css?v=2" />
     </head>
     <body>
@@ -40,9 +40,9 @@
           <div class="category-menu-list" id="categoryMenu" hidden>
             <a href="categoria.html?categoria=camiseta">Camisetas</a>
             <a href="categoria.html?categoria=moletom">Moletons e blusas</a>
-            <a href="categoria.html?categoria=jaqueta">Jaquetas</a>
             <a href="categoria.html?categoria=calca">Calças</a>
             <a href="categoria.html?categoria=bone">Bonés</a>
+            <a href="categoria.html?categoria=touca">Toucas</a>
           </div>
         </div>
         </nav>
@@ -62,7 +62,7 @@
         </div>
         
         <!-- Link funcional para o próximo drop -->
-        <a href="#proximo-drop" class="exclusive-tab">
+        <a href="vip.html" class="exclusive-tab" aria-label="Acessar Meu Espaço VIP">
             <span class="exclusive-badge">VIP</span>
             Meu Espaço
         </a>
@@ -73,16 +73,16 @@
       <section class="hero" id="proximo-drop" aria-label="Novo drop NEXUS">
         <div class="hero-slides">
           <article class="hero-slide is-active">
-            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 01</span><h2>NEW<br />DROP</h2><p>Coleção Inverno 2025 • Estampa Gráfica • Oversized Fit</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
-            <div class="hero-photo"><img src="Iron Mike Tyson.jpg" alt="Moletom gráfico NEXUS" /></div>
+            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 01</span><h2>NEXUS<br />NEYMAR JR.</h2><p>Camisa NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012.</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
+            <div class="hero-photo"><img src="imagens/CNM.jpeg" alt="Camisa NEXUS Neymar Jr. 100% Corre Paulistão 2012" /></div>
           </article>
           <article class="hero-slide">
-            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 02</span><h2>GRAPHIC<br />ENERGY</h2><p>Coleção Inverno 2025 • Algodão Premium • Caimento Solto</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
-            <div class="hero-photo"><img src="Camisa-neymar.jpg.jpg" alt="Camiseta gráfica NEXUS" /></div>
+            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 02</span><h2>BEANIE<br />DESTROYED</h2><p>Touca BEANIE DESTROYED NEON • Cor Neon • Tamanho único.</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
+            <div class="hero-photo"><img src="imagens/CBD.jpeg" alt="Touca BEANIE DESTROYED NEON" /></div>
           </article>
           <article class="hero-slide">
-            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 03</span><h2>BUILT<br />TO MOVE</h2><p>Coleção Inverno 2025 • Estrutura Leve • Utility Street</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
-            <div class="hero-photo"><img src="jaqueta-nexus.svg" alt="Jaqueta NEXUS" /></div>
+            <div class="hero-copy"><span class="hero-eyebrow">NEXUS / DROP 03</span><h2>5-PANEL<br />PIET</h2><p>Boné 5-PANEL PIET - OLIVE MINIMAL • Cor Olive Minimal • Tamanho único.</p><a href="#colecao" class="primary-btn">Compre agora</a></div>
+            <div class="hero-photo"><img src="imagens/CPP.jpeg" alt="Boné 5-Panel Piet - Olive Minimal" /></div>
           </article>
         </div>
         <button type="button" class="hero-arrow hero-arrow-prev" id="prevSlide" aria-label="Foto anterior">‹</button>
@@ -112,67 +112,83 @@
         </div>
 
         <div class="product-grid" id="productGrid">
-          <article class="product-card" data-product-id="graphic-nexus">
+          <article class="product-card" data-product-id="nexus-neymar-jr">
             <div class="product-image">
-              <img src="Iron Mike Tyson.jpg" alt="Moletom gráfico NEXUS" />
-              <button type="button" class="favorite-btn" data-favorite-product="Graphic Nexus" aria-label="Favoritar Graphic Nexus">♡</button>
-            </div>
-            <div class="product-body">
-              <div class="product-topline">
-                <span>Moletom</span>
-                <strong>R$ 249</strong>
-              </div>
-              <h4>Graphic Nexus</h4>
-              <p>Moletom oversized com grafismo frontal.</p>
-              <button type="button" class="add-cart-btn" data-product="Graphic Nexus" data-price="249">Adicionar ao carrinho</button>
-            </div>
-          </article>
-
-          <article class="product-card" data-product-id="nexus-logo-tee">
-            <div class="product-image">
-              <img src="Camisa-neymar.jpg.jpg" alt="Camiseta Nexus Logo Tee" />
-              <button type="button" class="favorite-btn" data-favorite-product="Nexus Logo Tee" aria-label="Favoritar Nexus Logo Tee">♡</button>
+              <img src="imagens/NM1.jpeg" alt="NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012" />
+              <button type="button" class="favorite-btn" data-favorite-product="NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012" aria-label="Favoritar NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012">♡</button>
             </div>
             <div class="product-body">
               <div class="product-topline">
                 <span>Camiseta</span>
-                <strong>R$ 189</strong>
+                <strong>R$ 249</strong>
               </div>
-              <h4>Nexus Logo Tee</h4>
-              <p>Malha premium com estampa gráfica.</p>
-              <button type="button" class="add-cart-btn" data-product="Nexus Logo Tee" data-price="189">Adicionar ao carrinho</button>
+              <h4>NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012</h4>
+              <p>Camiseta inspirada no corre do Paulistão 2012.</p>
+              <button type="button" class="add-cart-btn" data-product="NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012" data-price="249">Adicionar ao carrinho</button>
             </div>
           </article>
 
-          <article class="product-card" data-product-id="cap-nexus">
+          <article class="product-card" data-product-id="nexus-patchwork-baggy">
             <div class="product-image">
-              <img src="jaqueta-realista.svg" alt="Jaqueta Nexus realista" />
-              <button type="button" class="favorite-btn" data-favorite-product="Cap Nexus" aria-label="Favoritar Cap Nexus">♡</button>
+              <img src="imagens/NPB0.jpeg" alt="NEXUS PATCHWORK BAGGY" />
+              <button type="button" class="favorite-btn" data-favorite-product="NEXUS PATCHWORK BAGGY" aria-label="Favoritar NEXUS PATCHWORK BAGGY">♡</button>
+            </div>
+            <div class="product-body">
+              <div class="product-topline">
+                <span>Calça</span>
+                <strong>R$ 329</strong>
+              </div>
+              <h4>NEXUS PATCHWORK BAGGY</h4>
+              <p>Calça baggy com painéis de tecido.</p>
+              <button type="button" class="add-cart-btn" data-product="NEXUS PATCHWORK BAGGY" data-price="329">Adicionar ao carrinho</button>
+            </div>
+          </article>
+
+          <article class="product-card" data-product-id="5-panel-piet-olive">
+            <div class="product-image">
+              <img src="imagens/PP0.jpeg" alt="5-PANEL PIET - OLIVE MINIMAL" />
+              <button type="button" class="favorite-btn" data-favorite-product="5-PANEL PIET - OLIVE MINIMAL" aria-label="Favoritar 5-PANEL PIET - OLIVE MINIMAL">♡</button>
             </div>
             <div class="product-body">
               <div class="product-topline">
                 <span>Boné</span>
                 <strong>R$ 119</strong>
               </div>
-              <h4>Cap Nexus</h4>
-              <p>Boné de aba curva com identidade NEXUS.</p>
-              <button type="button" class="add-cart-btn" data-product="Cap Nexus" data-price="119">Adicionar ao carrinho</button>
+              <h4>5-PANEL PIET - OLIVE MINIMAL</h4>
+              <p>Boné 5-panel em tom olive minimal.</p>
+              <button type="button" class="add-cart-btn" data-product="5-PANEL PIET - OLIVE MINIMAL" data-price="119">Adicionar ao carrinho</button>
             </div>
           </article>
 
-          <article class="product-card" data-product-id="utility-cargo">
+          <article class="product-card" data-product-id="beanie-destroyed-neon">
             <div class="product-image">
-              <img src="jaqueta-realista.svg" alt="Calça cargo NEXUS" />
-              <button type="button" class="favorite-btn" data-favorite-product="Utility Cargo" aria-label="Favoritar Utility Cargo">♡</button>
+              <img src="imagens/BD1.jpeg" alt="BEANIE DESTROYED NEON" />
+              <button type="button" class="favorite-btn" data-favorite-product="BEANIE DESTROYED NEON" aria-label="Favoritar BEANIE DESTROYED NEON">♡</button>
             </div>
             <div class="product-body">
               <div class="product-topline">
-                <span>Calça cargo</span>
-                <strong>R$ 329</strong>
+                <span>Touca</span>
+                <strong>R$ 249</strong>
               </div>
-              <h4>Utility Cargo</h4>
-              <p>Volume funcional e construção para o dia inteiro.</p>
-              <button type="button" class="add-cart-btn" data-product="Utility Cargo" data-price="329">Adicionar ao carrinho</button>
+              <h4>BEANIE DESTROYED NEON</h4>
+              <p>Touca destroyed com destaque neon.</p>
+              <button type="button" class="add-cart-btn" data-product="BEANIE DESTROYED NEON" data-price="249">Adicionar ao carrinho</button>
+            </div>
+          </article>
+
+          <article class="product-card" data-product-id="nexus-wasted-fur-hoodie">
+            <div class="product-image">
+              <img src="imagens/NWF1.jpeg" alt="NEXUS “WASTED FUR” HOODIE" />
+              <button type="button" class="favorite-btn" data-favorite-product="NEXUS “WASTED FUR” HOODIE" aria-label="Favoritar NEXUS “WASTED FUR” HOODIE">♡</button>
+            </div>
+            <div class="product-body">
+              <div class="product-topline">
+                <span>Moletom</span>
+                <strong>R$ 189</strong>
+              </div>
+              <h4>NEXUS “WASTED FUR” HOODIE</h4>
+              <p>Moletom NEXUS WASTED FUR.</p>
+              <button type="button" class="add-cart-btn" data-product="NEXUS “WASTED FUR” HOODIE" data-price="189">Adicionar ao carrinho</button>
             </div>
           </article>
         </div>
@@ -425,9 +441,9 @@
             <a href="#colecao" data-category-filter="">Todas as peças</a>
             <a href="#colecao" data-category-filter="camiseta">Camisetas</a>
             <a href="#colecao" data-category-filter="moletom">Moletons</a>
-            <a href="#colecao" data-category-filter="boné">Bonés</a>
-            <p><a href="#colecao" data-category-filter="calça">Calças cargo</a></p>
-            <a href="#colecao" data-category-filter="jaqueta">Jaquetas</a>
+            <a href="#colecao" data-category-filter="bone">Bonés</a>
+            <a href="#colecao" data-category-filter="touca">Toucas</a>
+            <p><a href="#colecao" data-category-filter="calca">Calças cargo</a></p>
           </nav>
         </div>
         <div class="footer-column">
@@ -519,9 +535,9 @@
       N
     </button>
 
-      <script src="products.js?v=5"></script>
+      <script src="products.js?v=12"></script>
       <script src="admin-shortcut.js?v=1"></script>
-      <script src="app.js?v=13"></script>
+      <script src="app.js?v=16"></script>
       <script src="shop-header.js?v=4"></script>
       <script src="account.js?v=4"></script>
     </body>

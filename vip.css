@@ -1,0 +1,186 @@
+:root {
+  color-scheme: light;
+  font-family: "Inter", sans-serif;
+  color: #191a18;
+  background: #f5f4f0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+body.vip-page {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #f5f4f0;
+  color: #191a18;
+}
+
+.vip-page a { color: inherit; }
+.vip-page [hidden] { display: none !important; }
+
+.vip-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px max(24px, calc((100vw - 1120px) / 2));
+  border-bottom: 1px solid #e4e2dc;
+  background: rgba(250, 249, 246, .94);
+  backdrop-filter: blur(14px);
+}
+
+.vip-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+.vip-brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 3px;
+  background: #191a18;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-style: italic;
+  transform: skew(-8deg);
+}
+
+.vip-brand-mark span { color: #ff5a1f; }
+.vip-brand small, .vip-brand strong { display: block; }
+.vip-brand small { color: #8d8a82; font-size: .55rem; letter-spacing: .14em; }
+.vip-brand strong { margin-top: 2px; font-family: "Bebas Neue", sans-serif; font-size: 1.35rem; letter-spacing: .12em; }
+
+.vip-topbar nav { display: flex; align-items: center; gap: 25px; }
+.vip-topbar nav a { color: #626159; font-size: .75rem; font-weight: 700; text-decoration: none; }
+.vip-topbar nav a:hover { color: #e8531d; }
+
+.vip-main { width: min(1120px, calc(100% - 40px)); margin: 34px auto 52px; }
+
+.vip-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: center;
+  gap: 30px;
+  min-height: 320px;
+  overflow: hidden;
+  padding: clamp(28px, 6vw, 68px);
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 82% 18%, rgba(255, 90, 31, .23), transparent 34%),
+    linear-gradient(120deg, #191a18 0%, #272825 100%);
+  color: #fff;
+}
+
+.vip-hero::after {
+  position: absolute;
+  right: -80px;
+  bottom: -180px;
+  width: 410px;
+  height: 410px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 50%;
+  content: "";
+}
+
+.vip-hero-copy { position: relative; z-index: 1; max-width: 710px; }
+.vip-eyebrow, .vip-card-kicker { color: #b6b4ad; font-size: .63rem; font-weight: 800; letter-spacing: .18em; }
+.vip-hero h1 { margin: 20px 0 14px; font-family: "Bebas Neue", sans-serif; font-size: clamp(3.2rem, 7vw, 6rem); font-weight: 400; line-height: .86; letter-spacing: .01em; }
+.vip-hero h1 em { color: #ff6a32; font-style: normal; }
+.vip-hero-copy > p { max-width: 530px; margin: 20px 0 0; color: #c4c3bd; font-size: .86rem; line-height: 1.7; }
+
+.vip-hero-stamp {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 170px;
+  aspect-ratio: 1;
+  align-content: center;
+  justify-items: center;
+  border: 1px solid rgba(255, 255, 255, .27);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, .75);
+  transform: rotate(9deg);
+}
+
+.vip-hero-stamp span, .vip-hero-stamp small { font-size: .56rem; font-weight: 700; letter-spacing: .2em; }
+.vip-hero-stamp strong { color: #ff6a32; font-family: "Bebas Neue", sans-serif; font-size: 4.5rem; font-weight: 400; line-height: .95; }
+
+.vip-dashboard { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 16px; margin-top: 16px; }
+.vip-progress-card, .vip-benefits-card { min-height: 315px; padding: clamp(22px, 4vw, 36px); border: 1px solid #e2e0da; border-radius: 14px; }
+.vip-progress-card { background: #20211f; color: #fff; }
+.vip-card-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.vip-status-badge { padding: 7px 10px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 20px; color: #ff9a72; font-size: .58rem; font-weight: 800; letter-spacing: .1em; }
+.vip-status-badge.is-active { border-color: rgba(99, 197, 138, .45); color: #8be0a8; }
+.vip-progress-card h2, .vip-benefits-card h2 { margin: 20px 0 10px; font-family: "Bebas Neue", sans-serif; font-size: 2.4rem; font-weight: 400; letter-spacing: .02em; line-height: 1; }
+.vip-greeting { min-height: 18px; margin: 0 0 18px; color: #b9b8b2; font-size: .78rem; }
+.vip-guest-state p, .vip-benefits-card > p, .vip-access-card p { color: #8f9089; font-size: .78rem; line-height: 1.7; }
+.vip-guest-state p { max-width: 430px; margin: 0 0 20px; color: #c2c1bb; }
+.vip-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 0 17px; border-radius: 4px; background: #ff5a1f; color: #fff !important; font-size: .67rem; font-weight: 800; letter-spacing: .06em; text-decoration: none; text-transform: uppercase; }
+.vip-button:hover { background: #e84917; }
+
+.vip-progress-values { display: flex; align-items: baseline; gap: 7px; margin: 12px 0; }
+.vip-progress-values strong { font-size: clamp(1.7rem, 4vw, 2.35rem); letter-spacing: -.06em; }
+.vip-progress-values span { color: #aaa9a2; font-size: .72rem; }
+.vip-progress-values b { color: #f1f0eb; font-weight: 600; }
+.vip-progress-track { height: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; background: #393a37; }
+.vip-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff5a1f, #ffb05e); transition: width .65s cubic-bezier(.2, .8, .2, 1); }
+.vip-progress-message { min-height: 20px; margin: 13px 0 0; color: #ff9a72; font-size: .75rem; font-weight: 700; }
+.vip-pending-note { margin: 9px 0 0; color: #aaa9a2; font-size: .68rem; line-height: 1.55; }
+.vip-refresh { margin-top: 14px; padding: 0; border: 0; background: transparent; color: #c8c7c1; font: inherit; font-size: .68rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.vip-refresh:hover { color: #fff; }
+.vip-refresh:disabled { cursor: wait; opacity: .6; }
+.vip-page-status { margin: 14px 0 0; color: #aaa9a2; font-size: .69rem; }
+.vip-page-status.is-error { color: #ff9a72; }
+
+.vip-benefits-card { background: #fff; }
+.vip-benefits-card .vip-card-kicker { color: #e8531d; }
+.vip-benefits-card h2 { margin-top: 19px; font-size: clamp(2.1rem, 4vw, 2.8rem); }
+.vip-benefits-card > p { max-width: 390px; margin: 12px 0 20px; }
+.vip-benefit-line { display: flex; align-items: center; gap: 11px; padding: 11px 0; border-top: 1px solid #eceae5; }
+.vip-benefit-line span { color: #e8531d; font-size: .62rem; font-weight: 800; }
+.vip-benefit-line p { margin: 0; color: #464640; font-size: .72rem; font-weight: 600; }
+
+.vip-access-card { display: flex; align-items: center; gap: 22px; margin-top: 16px; padding: 25px 30px; border: 1px solid #e2e0da; border-radius: 14px; background: #ebe9e3; }
+.vip-access-icon { display: grid; width: 54px; height: 54px; flex: 0 0 54px; place-items: center; border-radius: 50%; background: #d7d4cb; color: #77756e; font-family: "Bebas Neue", sans-serif; font-size: 1.7rem; }
+.vip-access-card .vip-card-kicker { color: #e8531d; }
+.vip-access-card h2 { margin: 5px 0; font-family: "Bebas Neue", sans-serif; font-size: 1.8rem; font-weight: 400; }
+.vip-access-card p { margin: 0; }
+#vipUnlockedAccess .vip-card-kicker { color: #36734f; }
+.vip-rules { margin: 17px 3px 0; color: #77756f; font-size: .66rem; line-height: 1.6; }
+
+.vip-footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px max(24px, calc((100vw - 1120px) / 2)); border-top: 1px solid #e4e2dc; color: #85837c; font-size: .65rem; }
+.vip-footer a { color: #191a18; font-weight: 800; letter-spacing: .12em; text-decoration: none; }
+
+@media (max-width: 760px) {
+  .vip-topbar { padding: 12px 18px; }
+  .vip-topbar nav { gap: 14px; }
+  .vip-main { width: min(100% - 24px, 560px); margin-top: 16px; }
+  .vip-hero { grid-template-columns: 1fr; min-height: 0; gap: 20px; padding: 30px 24px; }
+  .vip-hero h1 { font-size: clamp(3rem, 12vw, 4.8rem); }
+  .vip-hero-stamp { position: absolute; right: -50px; bottom: -52px; width: 145px; opacity: .28; }
+  .vip-dashboard { grid-template-columns: 1fr; }
+  .vip-progress-card, .vip-benefits-card { min-height: 0; padding: 24px; }
+  .vip-access-card { align-items: flex-start; gap: 14px; padding: 20px; }
+}
+
+@media (max-width: 430px) {
+  .vip-topbar { align-items: flex-start; }
+  .vip-topbar nav { flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 5px; }
+  .vip-hero { padding: 26px 20px; }
+  .vip-eyebrow { font-size: .55rem; }
+  .vip-hero-copy > p { font-size: .78rem; }
+  .vip-progress-card h2 { font-size: 2.1rem; }
+  .vip-status-badge { font-size: .52rem; }
+  .vip-footer { padding: 18px; }
+}
