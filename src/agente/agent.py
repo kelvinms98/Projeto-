@@ -55,14 +55,15 @@ tools_config = [types.Tool(function_declarations=[web_search_decl, fetch_page_de
 
 class Agent:
     def __init__(self, client: genai.Client | None = None, model: str | None = None):
-        api_key = os.getenv("GEMINI_API_KEY") or getattr(config, "GEMINI_API_KEY", None)
-        
-        if not api_key:
-            raise RuntimeError(
-                "Variável GEMINI_API_KEY não encontrada. Defina-a no .env ou como variável de ambiente."
-            )
-            
-        self.client = client or genai.Client(api_key=api_key)
+        if client is None:
+            api_key = os.getenv("GEMINI_API_KEY") or getattr(config, "GEMINI_API_KEY", None)
+            if not api_key:
+                raise RuntimeError(
+                    "Variável GEMINI_API_KEY não encontrada. Defina-a no .env ou como variável de ambiente."
+                )
+            client = genai.Client(api_key=api_key)
+
+        self.client = client
         
         # Obtém o modelo e aplica o .strip() para remover espaços e quebras de linha acidentais
         env_model = os.getenv("GEMINI_MODEL") or getattr(config, "GEMINI_MODEL", None)

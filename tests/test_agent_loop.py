@@ -1,61 +1,86 @@
 from types import SimpleNamespace
 
+import requests
+
 from agente import agent as agent_module
 from agente.agent import Agent
 
 
-class FakeMessages:
+class FakeChat:
     def __init__(self, responses):
         self._responses = iter(responses)
 
-    def create(self, **kwargs):
+    def send_message(self, _message):
         return next(self._responses)
+
+
+class FakeChats:
+    def __init__(self, responses):
+        self.chat = FakeChat(responses)
+
+    def create(self, **_kwargs):
+        return self.chat
 
 
 class FakeClient:
     def __init__(self, responses):
-        self.messages = FakeMessages(responses)
+        self.chats = FakeChats(responses)
 
 
-def text_block(text):
-    return SimpleNamespace(type="text", text=text)
+class FakeDatabase:
+    def extract_sources(self, _text):
+        return []
+
+    def save_question(self, _question, _answer, _sources):
+        return None
 
 
-def tool_use_block(id_, name, input_):
-    return SimpleNamespace(type="tool_use", id=id_, name=name, input=input_)
+def make_agent(monkeypatch, responses):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setattr(agent_module.config, "GEMINI_API_KEY", None)
+    monkeypatch.setattr(agent_module, "Database", FakeDatabase)
+    return Agent(client=FakeClient(responses), model="fake-model")
 
 
-def test_run_returns_text_when_claude_does_not_use_tools():
-    response = SimpleNamespace(stop_reason="end_turn", content=[text_block("Ola!")])
-    agent = Agent(client=FakeClient([response]), model="fake-model")
+def function_response(name, args):
+    return SimpleNamespace(function_calls=[SimpleNamespace(name=name, args=args)], text=None)
+
+
+def final_response(text):
+    return SimpleNamespace(function_calls=[], text=text)
+
+
+def test_run_returns_text_when_gemini_does_not_use_tools(monkeypatch):
+    agent = make_agent(monkeypatch, [final_response("Ola!")])
 
     assert agent.run("oi") == "Ola!"
 
 
 def test_run_executes_tool_and_returns_final_answer(monkeypatch):
-    tool_call = SimpleNamespace(
-        stop_reason="tool_use",
-        content=[tool_use_block("call_1", "web_search", {"query": "python"})],
+    agent = make_agent(
+        monkeypatch,
+        [
+            function_response("web_search", {"query": "python"}),
+            final_response("Resposta final"),
+        ],
     )
-    final_response = SimpleNamespace(stop_reason="end_turn", content=[text_block("Resposta final")])
-    agent = Agent(client=FakeClient([tool_call, final_response]), model="fake-model")
-
-    monkeypatch.setitem(agent_module.RUNNERS, "web_search", lambda query: f"resultados para {query}")
+    monkeypatch.setattr(agent_module, "web_search_run", lambda query: f"resultados para {query}")
 
     assert agent.run("pesquise sobre python") == "Resposta final"
 
 
 def test_run_marks_tool_error_and_continues(monkeypatch):
-    tool_call = SimpleNamespace(
-        stop_reason="tool_use",
-        content=[tool_use_block("call_1", "fetch_page", {"url": "https://exemplo.invalido"})],
+    agent = make_agent(
+        monkeypatch,
+        [
+            function_response("fetch_page", {"url": "https://exemplo.invalido"}),
+            final_response("Nao consegui acessar a pagina."),
+        ],
     )
-    final_response = SimpleNamespace(stop_reason="end_turn", content=[text_block("Nao consegui acessar a pagina.")])
-    agent = Agent(client=FakeClient([tool_call, final_response]), model="fake-model")
 
     def failing_runner(url):
-        raise ValueError("falha de conexao")
+        raise requests.ConnectionError(f"falha de conexao: {url}")
 
-    monkeypatch.setitem(agent_module.RUNNERS, "fetch_page", failing_runner)
+    monkeypatch.setattr(agent_module, "fetch_page_run", failing_runner)
 
     assert agent.run("leia essa pagina") == "Nao consegui acessar a pagina."
