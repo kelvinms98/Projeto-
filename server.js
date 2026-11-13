@@ -478,6 +478,44 @@ function createApp({
     }
   });
 
+  app.get('/api/customer/vip-progress', requireCustomer, (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+      const progress = db.prepare(`
+        SELECT
+          COALESCE(SUM(CASE
+            WHEN status IN ('paid', 'preparing', 'shipped', 'delivered')
+              THEN ROUND(CASE WHEN subtotal > discount_amount
+                THEN subtotal - discount_amount ELSE 0 END * 100)
+            ELSE 0
+          END), 0) AS eligible_spend_cents,
+          COUNT(CASE WHEN status IN ('paid', 'preparing', 'shipped', 'delivered') THEN 1 END)
+            AS confirmed_orders,
+          COUNT(CASE WHEN status = 'awaiting_payment' THEN 1 END) AS pending_orders
+        FROM venda
+        WHERE id_cliente = ?
+      `).get(req.customer.id_cliente);
+      const targetCents = 100000;
+      const spendCents = Math.max(0, Math.round(Number(progress.eligible_spend_cents) || 0));
+      const remainingCents = Math.max(0, targetCents - spendCents);
+      const progressPercent = Math.min(100, Math.round((spendCents / targetCents) * 10000) / 100);
+      return res.json({
+        data: {
+          customerName: req.customer.nome,
+          spent: spendCents / 100,
+          target: targetCents / 100,
+          remaining: remainingCents / 100,
+          progressPercent,
+          isVip: spendCents >= targetCents,
+          confirmedOrders: Number(progress.confirmed_orders),
+          pendingOrders: Number(progress.pending_orders),
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   app.get('/', (_req, res) => res.sendFile(path.join(BASE_DIR, 'index.html')));
 
   app.post('/api/shipping-quote', requireCustomer, async (req, res) => {
@@ -531,11 +569,21 @@ function createApp({
     try {
       const products = db.prepare(`
         SELECT p.id_produto, p.nome, p.tamanho, p.cor, p.preco, p.estoque,
-               pm.image_url
+               pm.image_url, pm.updated_by
         FROM produto AS p
         LEFT JOIN product_media AS pm ON pm.product_name = p.nome COLLATE NOCASE
         ORDER BY nome, cor, tamanho, id_produto
       `).all();
+      const galleryByName = new Map();
+      for (const image of db.prepare(`
+        SELECT product_name, image_url
+        FROM product_gallery
+        ORDER BY display_order, id
+      `).all()) {
+        const key = image.product_name.toLowerCase();
+        if (!galleryByName.has(key)) galleryByName.set(key, []);
+        galleryByName.get(key).push(image.image_url);
+      }
       res.json({
         data: products.map((product) => ({
           id: Number(product.id_produto),
@@ -545,6 +593,8 @@ function createApp({
           price: product.preco === null ? null : money(product.preco),
           stock: Number(product.estoque),
           imageUrl: product.image_url || null,
+          hasCustomImage: product.updated_by !== null && product.updated_by !== undefined,
+          galleryImages: galleryByName.get(product.nome.toLowerCase()) || [],
         })),
       });
     } catch (error) {

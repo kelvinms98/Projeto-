@@ -5,7 +5,12 @@ cd /d "%~dp0"
 echo.
 echo ===== NEXUS - Comprar pelo terminal =====
 call preparar_python.bat
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    echo.
+    echo [ERRO] Nao foi possivel preparar o Python para a compra.
+    pause
+    exit /b 1
+)
 
 set "NEXUS_API_URL=http://127.0.0.1:8081"
 ".venv\Scripts\python.exe" teste_conexao.py

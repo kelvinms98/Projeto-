@@ -5,7 +5,6 @@ import re
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent
 LOGIN_PATTERN = re.compile(r"^[a-zA-Z0-9._-]{3,32}$")
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")

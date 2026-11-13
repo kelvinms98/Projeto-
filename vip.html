@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Acompanhe seu progresso NEXUS VIP e desbloqueie acesso antecipado aos novos drops." />
+    <title>Meu Espaço VIP | NEXUS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="vip.css?v=1" />
+  </head>
+  <body class="vip-page">
+    <header class="vip-topbar">
+      <a class="vip-brand" href="index.html" aria-label="NEXUS Store, início">
+        <span class="vip-brand-mark">N<span>/</span></span>
+        <span><small>STREETWEAR STORE</small><strong>NEXUS</strong></span>
+      </a>
+      <nav aria-label="Navegação principal">
+        <a href="index.html#colecao">Loja</a>
+        <a href="conta.html?redirect=%2Fvip.html">Minha conta</a>
+      </nav>
+    </header>
+
+    <main class="vip-main">
+      <section class="vip-hero" aria-labelledby="vipTitle">
+        <div class="vip-hero-copy">
+          <span class="vip-eyebrow">NEXUS / ACESSO EXCLUSIVO</span>
+          <h1 id="vipTitle">Seu próximo drop.<br /><em>Um passo à frente.</em></h1>
+          <p>Acumule R$ 1.000 em compras confirmadas e desbloqueie acesso antecipado aos novos drops NEXUS.</p>
+        </div>
+        <div class="vip-hero-stamp" aria-hidden="true">
+          <span>NEXUS</span>
+          <strong>VIP</strong>
+          <small>MEMBER ACCESS</small>
+        </div>
+      </section>
+
+      <section class="vip-dashboard" aria-label="Seu progresso e benefícios VIP">
+        <article class="vip-progress-card" aria-labelledby="progressTitle">
+          <div class="vip-card-topline">
+            <span class="vip-card-kicker">SUA JORNADA</span>
+            <span class="vip-status-badge" id="vipStatusBadge">VIP / 001</span>
+          </div>
+          <h2 id="progressTitle">Seu progresso</h2>
+          <p class="vip-greeting" id="vipGreeting"></p>
+
+          <div class="vip-guest-state" id="vipGuestState" hidden>
+            <p>Entre na sua conta para acompanhar as compras confirmadas e o caminho até o acesso VIP.</p>
+            <a class="vip-button" href="conta.html?redirect=%2Fvip.html">Entrar ou criar conta</a>
+          </div>
+
+          <div id="vipMemberState" hidden>
+            <div class="vip-progress-values">
+              <strong id="vipSpent">R$ 0,00</strong>
+              <span>de <b id="vipTarget">R$ 1.000,00</b></span>
+            </div>
+            <div
+              class="vip-progress-track"
+              id="vipProgressBar"
+              role="progressbar"
+              aria-label="Progresso para alcançar o nível VIP"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="vipProgressFill"></span>
+            </div>
+            <p class="vip-progress-message" id="vipProgressMessage"></p>
+            <p class="vip-pending-note" id="vipPendingNotice" hidden></p>
+            <button type="button" class="vip-refresh" id="vipRefresh">Atualizar progresso</button>
+          </div>
+
+          <p class="vip-page-status" id="vipPageStatus" role="status" aria-live="polite">Carregando seu espaço...</p>
+        </article>
+
+        <aside class="vip-benefits-card">
+          <span class="vip-card-kicker">O QUE TE ESPERA</span>
+          <h2>Acesso antecipado.<br />Do seu jeito.</h2>
+          <p>Quando o nível VIP for liberado, este espaço será seu ponto de entrada para conhecer os próximos drops antes da abertura geral.</p>
+          <div class="vip-benefit-line"><span>01</span><p>Novos drops antes do público geral</p></div>
+          <div class="vip-benefit-line"><span>02</span><p>Seu progresso de compras em um só lugar</p></div>
+        </aside>
+      </section>
+
+      <section class="vip-access-card" aria-live="polite">
+        <div class="vip-access-icon" aria-hidden="true">N</div>
+        <div id="vipLockedAccess">
+          <span class="vip-card-kicker">ÁREA VIP</span>
+          <h2>Seu passe está sendo construído.</h2>
+          <p>Ao alcançar R$ 1.000 em compras confirmadas, o acesso antecipado aos próximos drops será ativado aqui.</p>
+        </div>
+        <div id="vipUnlockedAccess" hidden>
+          <span class="vip-card-kicker">ACESSO LIBERADO</span>
+          <h2>Você está dentro.</h2>
+          <p>Seu nível VIP está ativo. Volte a este espaço para acompanhar as novidades e os próximos acessos antecipados.</p>
+        </div>
+      </section>
+
+      <p class="vip-rules">O progresso considera o valor dos produtos após descontos, sem incluir frete. Pedidos só entram na soma depois da confirmação do pagamento.</p>
+    </main>
+
+    <footer class="vip-footer">
+      <a href="index.html">NEXUS</a>
+      <span>Vista sua presença.</span>
+    </footer>
+
+    <script src="vip.js?v=2"></script>
+  </body>
+</html>

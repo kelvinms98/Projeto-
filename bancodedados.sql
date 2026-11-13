@@ -194,20 +194,21 @@ VALUES
 INSERT INTO produto (nome, tamanho, cor, preco, estoque)
 SELECT seed.nome, seed.tamanho, seed.cor, seed.preco, seed.estoque
 FROM (
-  SELECT 'Graphic Nexus' AS nome, 'P' AS tamanho, 'Unica' AS cor, 249.00 AS preco, 100 AS estoque
-  UNION ALL SELECT 'Graphic Nexus', 'M', 'Unica', 249.00, 100
-  UNION ALL SELECT 'Graphic Nexus', 'G', 'Unica', 249.00, 100
-  UNION ALL SELECT 'Graphic Nexus', 'GG', 'Unica', 249.00, 100
-  UNION ALL SELECT 'Nexus Logo Tee', 'P', 'Unica', 189.00, 100
-  UNION ALL SELECT 'Nexus Logo Tee', 'M', 'Unica', 189.00, 100
-  UNION ALL SELECT 'Nexus Logo Tee', 'G', 'Unica', 189.00, 100
-  UNION ALL SELECT 'Nexus Logo Tee', 'GG', 'Unica', 189.00, 100
-  UNION ALL SELECT 'Cap Nexus', 'Unico', 'Unica', 119.00, 100
-  UNION ALL SELECT 'Utility Cargo', '38', 'Unica', 329.00, 100
-  UNION ALL SELECT 'Utility Cargo', '40', 'Unica', 329.00, 100
-  UNION ALL SELECT 'Utility Cargo', '42', 'Unica', 329.00, 100
-  UNION ALL SELECT 'Utility Cargo', '44', 'Unica', 329.00, 100
-  UNION ALL SELECT 'Utility Cargo', '46', 'Unica', 329.00, 100
+  SELECT 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012' AS nome, 'P' AS tamanho, 'Unica' AS cor, 249.00 AS preco, 100 AS estoque
+  UNION ALL SELECT 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'M', 'Unica', 249.00, 100
+  UNION ALL SELECT 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'G', 'Unica', 249.00, 100
+  UNION ALL SELECT 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012', 'GG', 'Unica', 249.00, 100
+  UNION ALL SELECT 'NEXUS “WASTED FUR” HOODIE', 'P', 'Unica', 189.00, 100
+  UNION ALL SELECT 'NEXUS “WASTED FUR” HOODIE', 'M', 'Unica', 189.00, 100
+  UNION ALL SELECT 'NEXUS “WASTED FUR” HOODIE', 'G', 'Unica', 189.00, 100
+  UNION ALL SELECT 'NEXUS “WASTED FUR” HOODIE', 'GG', 'Unica', 189.00, 100
+  UNION ALL SELECT '5-PANEL PIET - OLIVE MINIMAL', 'Unico', 'Olive Minimal', 219.00, 100
+  UNION ALL SELECT 'NEXUS PATCHWORK BAGGY', '38', 'Unica', 329.00, 100
+  UNION ALL SELECT 'NEXUS PATCHWORK BAGGY', '40', 'Unica', 329.00, 100
+  UNION ALL SELECT 'NEXUS PATCHWORK BAGGY', '42', 'Unica', 329.00, 100
+  UNION ALL SELECT 'NEXUS PATCHWORK BAGGY', '44', 'Unica', 329.00, 100
+  UNION ALL SELECT 'NEXUS PATCHWORK BAGGY', '46', 'Unica', 329.00, 100
+  UNION ALL SELECT 'BEANIE DESTROYED NEON', 'Unico', 'Neon', 249.00, 100
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM produto);
 

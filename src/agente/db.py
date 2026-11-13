@@ -2,8 +2,9 @@ import json
 import os
 import re
 import sqlite3
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
+
 import requests
 
 from . import config
@@ -152,11 +153,11 @@ class Database:
             cursor = conn.cursor()
             cursor.execute(
                 f"INSERT INTO questions (question, answer, sources, created_at) VALUES ({self.placeholder}, {self.placeholder}, {self.placeholder}, {self.placeholder})",
-                (question, answer, json.dumps(sources), datetime.now(timezone.utc).isoformat()),
+                (question, answer, json.dumps(sources), datetime.now(UTC).isoformat()),
             )
             conn.commit()
 
-    def get_cached_search(self, query: str) -> Optional[str]:
+    def get_cached_search(self, query: str) -> str | None:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -171,11 +172,11 @@ class Database:
             cursor = conn.cursor()
             cursor.execute(
                 f"REPLACE INTO searches (query, result, created_at) VALUES ({self.placeholder}, {self.placeholder}, {self.placeholder})",
-                (query, result, datetime.now(timezone.utc).isoformat()),
+                (query, result, datetime.now(UTC).isoformat()),
             )
             conn.commit()
 
-    def get_cached_page(self, url: str) -> Optional[str]:
+    def get_cached_page(self, url: str) -> str | None:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -190,7 +191,7 @@ class Database:
             cursor = conn.cursor()
             cursor.execute(
                 f"REPLACE INTO pages (url, content, created_at) VALUES ({self.placeholder}, {self.placeholder}, {self.placeholder})",
-                (url, content, datetime.now(timezone.utc).isoformat()),
+                (url, content, datetime.now(UTC).isoformat()),
             )
             conn.commit()
 
@@ -208,7 +209,7 @@ class Database:
                     product.get('tag'),
                     product.get('image'),
                     product.get('stock'),
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
             conn.commit()
@@ -290,12 +291,12 @@ class Database:
             },
         ]
 
-        for p in defaults:
-            try:
-                self.add_product(p)
-            except Exception:
-                # ignore duplicates or insert errors when seeding
+        existing_names = {product['name'] for product in self.list_products()}
+        for product in defaults:
+            if product['name'] in existing_names:
                 continue
+            self.add_product(product)
+            existing_names.add(product['name'])
 
     def sync_products_to_supabase(self, supabase_url: str, supabase_key: str) -> dict:
         """Tenta sincronizar produtos para a tabela `products` via Supabase REST API.
@@ -331,7 +332,7 @@ class Database:
                     results['success'].append(p['name'])
                 else:
                     results['failed'].append({'name': p['name'], 'status_code': resp.status_code, 'body': resp.text})
-            except Exception as exc:
+            except requests.RequestException as exc:
                 results['failed'].append({'name': p['name'], 'error': str(exc)})
 
         return results

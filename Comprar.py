@@ -3,11 +3,11 @@ import os
 import re
 from decimal import Decimal
 from getpass import getpass
-from pathlib import Path
-from urllib.request import HTTPCookieProcessor, build_opener
 from http.cookiejar import CookieJar
+from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
+
 
 def carregar_env_local(path):
     """Lê as variáveis usadas pelo checkout sem exigir bibliotecas externas."""

@@ -46,6 +46,10 @@ goto menu
 
 :comprar
 call run_comprar.bat
+if errorlevel 1 goto menu
+echo.
+echo Sistema de compras encerrado. Pressione qualquer tecla para voltar ao menu.
+pause >nul
 goto menu
 
 :servidor

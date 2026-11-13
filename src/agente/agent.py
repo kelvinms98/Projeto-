@@ -1,12 +1,15 @@
 import os
-from dotenv import load_dotenv, find_dotenv
+
+import requests
+from dotenv import find_dotenv, load_dotenv
+from duckduckgo_search.exceptions import DuckDuckGoSearchException
 from google import genai
 from google.genai import types
 
 from . import config
 from .db import Database
-from .tools.web_search import run as web_search_run
 from .tools.fetch_page import run as fetch_page_run
+from .tools.web_search import run as web_search_run
 
 # Localiza o arquivo .env a partir da raiz do projeto e força a sobrescrita
 load_dotenv(find_dotenv(), override=True)
@@ -52,14 +55,15 @@ tools_config = [types.Tool(function_declarations=[web_search_decl, fetch_page_de
 
 class Agent:
     def __init__(self, client: genai.Client | None = None, model: str | None = None):
-        api_key = os.getenv("GEMINI_API_KEY") or getattr(config, "GEMINI_API_KEY", None)
-        
-        if not api_key:
-            raise RuntimeError(
-                "Variável GEMINI_API_KEY não encontrada. Defina-a no .env ou como variável de ambiente."
-            )
-            
-        self.client = client or genai.Client(api_key=api_key)
+        if client is None:
+            api_key = os.getenv("GEMINI_API_KEY") or getattr(config, "GEMINI_API_KEY", None)
+            if not api_key:
+                raise RuntimeError(
+                    "Variável GEMINI_API_KEY não encontrada. Defina-a no .env ou como variável de ambiente."
+                )
+            client = genai.Client(api_key=api_key)
+
+        self.client = client
         
         # Obtém o modelo e aplica o .strip() para remover espaços e quebras de linha acidentais
         env_model = os.getenv("GEMINI_MODEL") or getattr(config, "GEMINI_MODEL", None)
@@ -91,8 +95,8 @@ class Agent:
                 if name in runners:
                     try:
                         output = runners[name](**args)
-                    except Exception as exc:
-                        output = f"Erro ao executar a ferramenta {name}: {str(exc)}"
+                    except (DuckDuckGoSearchException, requests.RequestException, ValueError) as exc:
+                        output = f"Erro ao executar a ferramenta {name}: {exc!s}"
 
                     response = chat.send_message(
                         types.Part.from_function_response(

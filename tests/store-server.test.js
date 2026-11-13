@@ -103,7 +103,20 @@ test('serves products and delivery options from SQLite', async () => {
   const deliveries = await deliveriesResponse.json();
 
   assert.equal(productsResponse.status, 200);
-  assert.equal(products.data[0].name, 'Cap Nexus');
+  const productsByName = new Map(products.data.map((product) => [product.name, product]));
+  assert.deepEqual([...productsByName.keys()].sort(), [
+    '5-PANEL PIET - OLIVE MINIMAL',
+    'BEANIE DESTROYED NEON',
+    'NEXUS “WASTED FUR” HOODIE',
+    'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012',
+    'NEXUS PATCHWORK BAGGY',
+  ].sort());
+  assert.deepEqual(productsByName.get('5-PANEL PIET - OLIVE MINIMAL').galleryImages, ['imagens/PP0.jpeg', 'imagens/PP1.jpeg', 'imagens/PP2.jpeg', 'imagens/PP3.jpeg']);
+  assert.deepEqual(productsByName.get('BEANIE DESTROYED NEON').galleryImages, ['imagens/BD1.jpeg', 'imagens/BD2.jpeg', 'imagens/BD3.jpeg', 'imagens/BD4.jpeg', 'imagens/BD5.jpeg', 'imagens/BD6.jpeg']);
+  assert.equal(productsByName.get('BEANIE DESTROYED NEON').price, '249.00');
+  assert.deepEqual(productsByName.get('NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012').galleryImages, ['imagens/NM1.jpeg', 'imagens/NM2.jpeg', 'imagens/NM3.jpeg', 'imagens/NM4.jpeg', 'imagens/CNM.jpeg']);
+  assert.deepEqual(productsByName.get('NEXUS PATCHWORK BAGGY').galleryImages, ['imagens/NPB0.jpeg', 'imagens/NPB1.jpeg', 'imagens/NPB2.jpeg', 'imagens/NPB3.jpeg']);
+  assert.deepEqual(productsByName.get('NEXUS “WASTED FUR” HOODIE').galleryImages, ['imagens/NWF1.jpeg', 'imagens/NWF2.jpeg', 'imagens/NWF3.jpeg', 'imagens/NWF4.jpeg', 'imagens/NWF5.jpeg']);
   assert.equal(deliveriesResponse.status, 200);
   assert.equal(deliveries.data[0].fee, '0.00');
 });
@@ -175,7 +188,7 @@ test('logs customers in with an individual account and protects account data', a
 test('uses a unique database index for each product variant', () => {
   const insert = db.prepare(`
     INSERT INTO produto (nome, tamanho, cor, preco, estoque)
-    VALUES ('graphic nexus', 'm', 'unica', 250, 2)
+    VALUES ('nexus neymar jr. 100% corre PAULISTÃO 2012', 'm', 'unica', 250, 2)
   `);
   assert.throws(insert.run.bind(insert), /UNIQUE constraint failed/);
 });
@@ -219,7 +232,7 @@ test('creates orders transactionally and decrements stock', async () => {
       cep: '01000-000',
       items: [{
         productId: 2,
-        name: 'Graphic Nexus',
+        name: 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012',
         size: 'M',
         color: 'Unica',
         quantity: 3,
@@ -244,6 +257,42 @@ test('creates orders transactionally and decrements stock', async () => {
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM item_venda').get().count, 1);
   const customerOrders = await fetch(`${baseUrl}/api/customer/orders`, { headers: { cookie: customerCookie } });
   assert.equal((await customerOrders.json()).data.length, 1);
+
+  const unauthenticatedProgress = await fetch(`${baseUrl}/api/customer/vip-progress`);
+  assert.equal(unauthenticatedProgress.status, 401);
+
+  const pendingProgressResponse = await fetch(`${baseUrl}/api/customer/vip-progress`, {
+    headers: { cookie: customerCookie },
+  });
+  const pendingProgress = (await pendingProgressResponse.json()).data;
+  assert.equal(pendingProgress.spent, 0);
+  assert.equal(pendingProgress.pendingOrders, 1);
+  assert.equal(pendingProgress.isVip, false);
+
+  const originalOrder = db.prepare('SELECT subtotal, status FROM venda WHERE id_venda = ?').get(result.orderId);
+  try {
+    db.prepare("UPDATE venda SET status = 'paid' WHERE id_venda = ?").run(result.orderId);
+    const confirmedProgressResponse = await fetch(`${baseUrl}/api/customer/vip-progress`, {
+      headers: { cookie: customerCookie },
+    });
+    const confirmedProgress = (await confirmedProgressResponse.json()).data;
+    assert.equal(confirmedProgress.spent, 672.3);
+    assert.equal(confirmedProgress.progressPercent, 67.23);
+    assert.equal(confirmedProgress.confirmedOrders, 1);
+    assert.equal(confirmedProgress.isVip, false);
+
+    db.prepare('UPDATE venda SET subtotal = 1200 WHERE id_venda = ?').run(result.orderId);
+    const vipProgressResponse = await fetch(`${baseUrl}/api/customer/vip-progress`, {
+      headers: { cookie: customerCookie },
+    });
+    const vipProgress = (await vipProgressResponse.json()).data;
+    assert.equal(vipProgress.isVip, true);
+    assert.equal(vipProgress.progressPercent, 100);
+    assert.equal(vipProgress.remaining, 0);
+  } finally {
+    db.prepare('UPDATE venda SET subtotal = ?, status = ? WHERE id_venda = ?')
+      .run(originalOrder.subtotal, originalOrder.status, result.orderId);
+  }
 });
 
 test('rejects out-of-stock orders without changing inventory', async () => {
@@ -261,7 +310,7 @@ test('rejects out-of-stock orders without changing inventory', async () => {
       cep: '01000-000',
       items: [{
         productId: 2,
-        name: 'Graphic Nexus',
+        name: 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012',
         size: 'M',
         color: 'Unica',
         quantity: 1,
@@ -286,7 +335,7 @@ test('keeps a registered order when its confirmation email cannot be sent', asyn
       deliveryOptionId: 'store_pickup',
       items: [{
         productId: 1,
-        name: 'Graphic Nexus',
+        name: 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012',
         size: 'P',
         color: 'Unica',
         quantity: 1,
@@ -416,7 +465,7 @@ test('secures the admin panel and manages employees, cash, photos and receipts',
     redirect: 'manual',
     headers: { cookie: sessionCookie, 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      product_name: 'Graphic Nexus',
+      product_name: 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012',
       image_url: 'imagens/graphic-nexus.jpg',
       csrf_token: csrfToken,
     }),
@@ -424,7 +473,7 @@ test('secures the admin panel and manages employees, cash, photos and receipts',
   assert.equal(mediaResponse.status, 302);
   const productsResponse = await fetch(`${baseUrl}/api/products`);
   const products = await productsResponse.json();
-  assert.equal(products.data.find((product) => product.name === 'Graphic Nexus').imageUrl, 'imagens/graphic-nexus.jpg');
+  assert.equal(products.data.find((product) => product.name === 'NEXUS NEYMAR JR. 100% CORRE PAULISTÃO 2012').imageUrl, 'imagens/graphic-nexus.jpg');
 
   const managerLogin = await login('gerente.loja', 'temporary-manager-password');
   assert.equal(managerLogin.response.status, 302);
